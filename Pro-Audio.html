@@ -1,0 +1,4220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pro Audio Player - Studio Edition</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<style>
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+}
+
+:root {
+--primary: #6366f1;
+--primary-dark: #4f46e5;
+--secondary: #ec4899;
+--accent: #8b5cf6;
+--bg-dark: #0a0a0f;
+--bg-card: #12121a;
+--bg-card-hover: #1a1a25;
+--bg-elevated: #1e1e2a;
+--text-primary: #ffffff;
+--text-secondary: #8888a0;
+--success: #10b981;
+--warning: #f59e0b;
+--danger: #ef4444;
+--border: rgba(255,255,255,0.08);
+}
+
+body {
+font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+background: var(--bg-dark);
+color: var(--text-primary);
+min-height: 100vh;
+overflow-x: hidden;
+}
+
+.app-container {
+display: flex;
+min-height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+width: 260px;
+background: var(--bg-card);
+border-right: 1px solid var(--border);
+display: flex;
+flex-direction: column;
+position: fixed;
+height: 100vh;
+z-index: 100;
+transition: transform 0.3s ease;
+}
+
+.sidebar-header {
+padding: 25px;
+border-bottom: 1px solid var(--border);
+}
+
+.logo {
+display: flex;
+align-items: center;
+gap: 12px;
+}
+
+.logo-icon {
+width: 45px;
+height: 45px;
+background: linear-gradient(135deg, var(--primary), var(--secondary));
+border-radius: 12px;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 20px;
+}
+
+.logo-text h1 {
+font-size: 18px;
+font-weight: 700;
+background: linear-gradient(135deg, var(--primary), var(--secondary));
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+}
+
+.logo-text span {
+font-size: 11px;
+color: var(--text-secondary);
+}
+
+.nav-section {
+padding: 20px 15px;
+flex: 1;
+overflow-y: auto;
+}
+
+.nav-label {
+font-size: 11px;
+text-transform: uppercase;
+letter-spacing: 1px;
+color: var(--text-secondary);
+padding: 0 10px;
+margin-bottom: 10px;
+}
+
+.nav-menu {
+list-style: none;
+margin-bottom: 25px;
+}
+
+.nav-item {
+margin-bottom: 4px;
+}
+
+.nav-link {
+display: flex;
+align-items: center;
+gap: 12px;
+padding: 12px 15px;
+border-radius: 10px;
+color: var(--text-secondary);
+text-decoration: none;
+transition: all 0.3s ease;
+cursor: pointer;
+}
+
+.nav-link:hover {
+background: var(--bg-card-hover);
+color: var(--text-primary);
+}
+
+.nav-link.active {
+background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(236, 72, 153, 0.1));
+color: var(--primary);
+border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+.nav-link i {
+width: 20px;
+text-align: center;
+font-size: 16px;
+}
+
+.nav-badge {
+margin-left: auto;
+background: var(--primary);
+color: white;
+font-size: 10px;
+padding: 2px 8px;
+border-radius: 10px;
+}
+
+.nav-badge.new {
+background: var(--secondary);
+}
+
+/* Mini Player */
+.mini-player {
+padding: 20px;
+border-top: 1px solid var(--border);
+background: var(--bg-elevated);
+}
+
+.mini-player-info {
+display: flex;
+align-items: center;
+gap: 12px;
+margin-bottom: 15px;
+}
+
+.mini-album-art {
+width: 50px;
+height: 50px;
+background: linear-gradient(135deg, var(--primary), var(--secondary));
+border-radius: 8px;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 20px;
+}
+
+.mini-track-info {
+flex: 1;
+overflow: hidden;
+}
+
+.mini-track-title {
+font-size: 13px;
+font-weight: 600;
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;
+}
+
+.mini-track-artist {
+font-size: 11px;
+color: var(--text-secondary);
+}
+
+.mini-controls {
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 15px;
+}
+
+.mini-btn {
+width: 35px;
+height: 35px;
+border-radius: 50%;
+border: none;
+background: transparent;
+color: var(--text-secondary);
+cursor: pointer;
+display: flex;
+align-items: center;
+justify-content: center;
+transition: all 0.3s ease;
+}
+
+.mini-btn:hover {
+color: var(--text-primary);
+background: rgba(255,255,255,0.1);
+}
+
+.mini-btn.play {
+width: 40px;
+height: 40px;
+background: var(--primary);
+color: white;
+}
+
+.mini-progress {
+height: 3px;
+background: rgba(255,255,255,0.1);
+border-radius: 2px;
+margin-top: 12px;
+overflow: hidden;
+}
+
+.mini-progress-fill {
+height: 100%;
+background: linear-gradient(90deg, var(--primary), var(--secondary));
+width: 0%;
+transition: width 0.1s linear;
+}
+
+/* Main Content */
+.main-content {
+flex: 1;
+margin-left: 260px;
+min-height: 100vh;
+}
+
+.page-header {
+padding: 25px 30px;
+background: linear-gradient(180deg, var(--bg-card), transparent);
+border-bottom: 1px solid var(--border);
+display: flex;
+justify-content: space-between;
+align-items: center;
+position: sticky;
+top: 0;
+z-index: 50;
+backdrop-filter: blur(20px);
+}
+
+.page-title {
+font-size: 28px;
+font-weight: 700;
+}
+
+.page-subtitle {
+color: var(--text-secondary);
+font-size: 14px;
+margin-top: 5px;
+}
+
+.page-actions {
+display: flex;
+gap: 15px;
+}
+
+.btn {
+padding: 10px 20px;
+border-radius: 10px;
+border: none;
+font-size: 14px;
+font-weight: 600;
+cursor: pointer;
+display: flex;
+align-items: center;
+gap: 8px;
+transition: all 0.3s ease;
+}
+
+.btn-primary {
+background: linear-gradient(135deg, var(--primary), var(--secondary));
+color: white;
+}
+
+.btn-primary:hover {
+transform: translateY(-2px);
+box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
+}
+
+.btn-secondary {
+background: var(--bg-elevated);
+color: var(--text-primary);
+border: 1px solid var(--border);
+}
+
+.btn-success {
+background: linear-gradient(135deg, var(--success), #059669);
+color: white;
+}
+
+.btn:disabled {
+opacity: 0.5;
+cursor: not-allowed;
+transform: none !important;
+}
+
+.btn-lg {
+padding: 15px 30px;
+font-size: 16px;
+}
+
+/* Page Content */
+.page {
+display: none;
+padding: 30px;
+animation: fadeIn 0.3s ease;
+}
+
+.page.active {
+display: block;
+}
+
+@keyframes fadeIn {
+from { opacity: 0; transform: translateY(10px); }
+to { opacity: 1; transform: translateY(0); }
+}
+
+/* Home Page Grid */
+.home-grid {
+display: grid;
+grid-template-columns: 1fr 400px;
+gap: 30px;
+}
+
+/* Visualizer */
+.visualizer-section {
+background: var(--bg-card);
+border-radius: 20px;
+padding: 25px;
+border: 1px solid var(--border);
+}
+
+.visualizer-header {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 20px;
+}
+
+.visualizer-title {
+font-size: 16px;
+font-weight: 600;
+display: flex;
+align-items: center;
+gap: 10px;
+}
+
+.visualizer-title i {
+color: var(--primary);
+}
+
+.visualizer-modes {
+display: flex;
+gap: 5px;
+}
+
+.viz-mode-btn {
+padding: 6px 12px;
+border: none;
+background: rgba(255,255,255,0.05);
+color: var(--text-secondary);
+border-radius: 6px;
+cursor: pointer;
+font-size: 12px;
+transition: all 0.3s ease;
+}
+
+.viz-mode-btn.active {
+background: var(--primary);
+color: white;
+}
+
+#visualizerCanvas {
+width: 100%;
+height: 250px;
+border-radius: 12px;
+background: rgba(0,0,0,0.3);
+}
+
+/* Now Playing */
+.now-playing-card {
+background: linear-gradient(135deg, var(--bg-card), rgba(99, 102, 241, 0.1));
+border-radius: 20px;
+padding: 30px;
+border: 1px solid var(--border);
+text-align: center;
+}
+
+.album-art-large {
+width: 200px;
+height: 200px;
+margin: 0 auto 25px;
+}
+
+.album-art-img {
+width: 100%;
+height: 100%;
+border-radius: 50%;
+background: linear-gradient(135deg, var(--primary), var(--secondary));
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 60px;
+box-shadow: 0 20px 60px rgba(99, 102, 241, 0.4);
+position: relative;
+}
+
+.album-art-img.playing {
+animation: spin 15s linear infinite;
+}
+
+@keyframes spin {
+100% { transform: rotate(360deg); }
+}
+
+.album-art-img::before {
+content: '';
+position: absolute;
+width: 35px;
+height: 35px;
+background: var(--bg-dark);
+border-radius: 50%;
+border: 4px solid var(--bg-card);
+}
+
+.track-info-large {
+margin-bottom: 20px;
+}
+
+.track-title-large {
+font-size: 18px;
+font-weight: 700;
+margin-bottom: 5px;
+}
+
+.track-artist-large {
+color: var(--text-secondary);
+font-size: 13px;
+}
+
+/* Progress */
+.progress-section {
+margin-bottom: 20px;
+}
+
+.progress-bar-large {
+height: 6px;
+background: rgba(255,255,255,0.1);
+border-radius: 3px;
+cursor: pointer;
+overflow: hidden;
+}
+
+.progress-fill-large {
+height: 100%;
+background: linear-gradient(90deg, var(--primary), var(--secondary));
+width: 0%;
+border-radius: 3px;
+transition: width 0.1s linear;
+}
+
+.time-display {
+display: flex;
+justify-content: space-between;
+margin-top: 8px;
+font-size: 12px;
+color: var(--text-secondary);
+}
+
+/* Controls */
+.main-controls {
+display: flex;
+justify-content: center;
+align-items: center;
+gap: 15px;
+margin-bottom: 20px;
+}
+
+.ctrl-btn {
+width: 45px;
+height: 45px;
+border-radius: 50%;
+border: none;
+background: rgba(255,255,255,0.1);
+color: white;
+cursor: pointer;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 16px;
+transition: all 0.3s ease;
+}
+
+.ctrl-btn:hover {
+background: rgba(255,255,255,0.2);
+transform: scale(1.1);
+}
+
+.ctrl-btn.active {
+color: var(--primary);
+}
+
+.ctrl-btn.play-main {
+width: 60px;
+height: 60px;
+background: linear-gradient(135deg, var(--primary), var(--secondary));
+font-size: 22px;
+}
+
+/* Volume */
+.volume-section {
+display: flex;
+align-items: center;
+gap: 12px;
+padding: 12px 15px;
+background: rgba(0,0,0,0.2);
+border-radius: 10px;
+}
+
+.volume-slider, .fx-slider {
+flex: 1;
+-webkit-appearance: none;
+height: 6px;
+background: rgba(255,255,255,0.1);
+border-radius: 3px;
+cursor: pointer;
+}
+
+.volume-slider::-webkit-slider-thumb,
+.fx-slider::-webkit-slider-thumb {
+-webkit-appearance: none;
+width: 18px;
+height: 18px;
+background: linear-gradient(135deg, var(--primary), var(--secondary));
+border-radius: 50%;
+cursor: pointer;
+}
+
+/* Playlist Page */
+.playlist-header-section {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 25px;
+}
+
+.playlist-info {
+display: flex;
+align-items: center;
+gap: 20px;
+}
+
+.playlist-cover {
+width: 100px;
+height: 100px;
+background: linear-gradient(135deg, var(--primary), var(--secondary));
+border-radius: 15px;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 35px;
+}
+
+.playlist-table {
+background: var(--bg-card);
+border-radius: 15px;
+overflow: hidden;
+border: 1px solid var(--border);
+}
+
+.playlist-table-header {
+display: grid;
+grid-template-columns: 50px 1fr 150px 80px 60px;
+padding: 15px 20px;
+background: var(--bg-elevated);
+font-size: 12px;
+text-transform: uppercase;
+letter-spacing: 1px;
+color: var(--text-secondary);
+border-bottom: 1px solid var(--border);
+}
+
+.playlist-row {
+display: grid;
+grid-template-columns: 50px 1fr 150px 80px 60px;
+padding: 12px 20px;
+align-items: center;
+border-bottom: 1px solid var(--border);
+transition: all 0.3s ease;
+cursor: pointer;
+}
+
+.playlist-row:hover {
+background: var(--bg-card-hover);
+}
+
+.playlist-row.active {
+background: linear-gradient(90deg, rgba(99, 102, 241, 0.2), transparent);
+}
+
+.row-track {
+display: flex;
+align-items: center;
+gap: 12px;
+}
+
+.row-track-art {
+width: 40px;
+height: 40px;
+background: linear-gradient(135deg, var(--primary), var(--secondary));
+border-radius: 6px;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 14px;
+}
+
+.row-track-info h4 {
+font-size: 13px;
+font-weight: 600;
+}
+
+.row-track-info span {
+font-size: 11px;
+color: var(--text-secondary);
+}
+
+.row-actions {
+display: flex;
+gap: 8px;
+opacity: 0;
+transition: opacity 0.3s;
+}
+
+.playlist-row:hover .row-actions {
+opacity: 1;
+}
+
+.row-action-btn {
+width: 28px;
+height: 28px;
+border: none;
+background: transparent;
+color: var(--text-secondary);
+cursor: pointer;
+border-radius: 5px;
+display: flex;
+align-items: center;
+justify-content: center;
+transition: all 0.3s;
+}
+
+.row-action-btn:hover {
+background: rgba(255,255,255,0.1);
+color: var(--text-primary);
+}
+
+.row-action-btn.danger:hover {
+color: var(--danger);
+background: rgba(239, 68, 68, 0.1);
+}
+
+.playlist-empty {
+padding: 60px 40px;
+text-align: center;
+}
+
+.playlist-empty i {
+font-size: 60px;
+color: var(--text-secondary);
+opacity: 0.3;
+margin-bottom: 15px;
+}
+
+/* FX Page */
+.fx-grid {
+display: grid;
+grid-template-columns: repeat(2, 1fr);
+gap: 25px;
+}
+
+.fx-card {
+background: var(--bg-card);
+border-radius: 20px;
+padding: 25px;
+border: 1px solid var(--border);
+}
+
+.fx-card.full-width {
+grid-column: span 2;
+}
+
+.fx-card-header {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 20px;
+}
+
+.fx-card-title {
+display: flex;
+align-items: center;
+gap: 12px;
+font-size: 16px;
+font-weight: 600;
+}
+
+.fx-card-title i {
+width: 36px;
+height: 36px;
+background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(236, 72, 153, 0.1));
+border-radius: 8px;
+display: flex;
+align-items: center;
+justify-content: center;
+color: var(--primary);
+}
+
+.fx-toggle {
+width: 48px;
+height: 26px;
+background: rgba(255,255,255,0.1);
+border-radius: 13px;
+cursor: pointer;
+position: relative;
+transition: background 0.3s;
+}
+
+.fx-toggle.active {
+background: var(--primary);
+}
+
+.fx-toggle::after {
+content: '';
+position: absolute;
+width: 20px;
+height: 20px;
+background: white;
+border-radius: 50%;
+top: 3px;
+left: 3px;
+transition: transform 0.3s;
+}
+
+.fx-toggle.active::after {
+transform: translateX(22px);
+}
+
+.fx-slider-group {
+margin-bottom: 18px;
+}
+
+.fx-slider-header {
+display: flex;
+justify-content: space-between;
+margin-bottom: 10px;
+}
+
+.fx-slider-label {
+font-size: 13px;
+color: var(--text-secondary);
+}
+
+.fx-slider-value {
+font-size: 13px;
+font-weight: 600;
+color: var(--primary);
+}
+
+.presets-grid {
+display: grid;
+grid-template-columns: repeat(4, 1fr);
+gap: 10px;
+}
+
+.preset-btn {
+padding: 12px;
+background: rgba(255,255,255,0.05);
+border: 1px solid var(--border);
+border-radius: 10px;
+color: var(--text-secondary);
+cursor: pointer;
+transition: all 0.3s;
+text-align: center;
+}
+
+.preset-btn:hover {
+background: rgba(99, 102, 241, 0.1);
+border-color: var(--primary);
+color: var(--text-primary);
+}
+
+.preset-btn.active {
+background: var(--primary);
+color: white;
+border-color: var(--primary);
+}
+
+.preset-btn i {
+font-size: 20px;
+margin-bottom: 6px;
+display: block;
+}
+
+.preset-btn span {
+font-size: 11px;
+font-weight: 600;
+}
+
+/* Surround Visual */
+.surround-visual {
+width: 140px;
+height: 140px;
+margin: 20px auto 0;
+position: relative;
+border: 2px solid rgba(255,255,255,0.1);
+border-radius: 50%;
+}
+
+.surround-dot {
+position: absolute;
+top: 50%;
+left: 50%;
+width: 16px;
+height: 16px;
+background: linear-gradient(135deg, var(--primary), var(--secondary));
+border-radius: 50%;
+transform: translate(-50%, -50%);
+box-shadow: 0 0 20px var(--primary);
+transition: transform 0.05s;
+}
+
+.surround-label {
+position: absolute;
+font-size: 10px;
+color: var(--text-secondary);
+}
+
+.surround-label.top { top: -18px; left: 50%; transform: translateX(-50%); }
+.surround-label.bottom { bottom: -18px; left: 50%; transform: translateX(-50%); }
+.surround-label.left { left: -20px; top: 50%; transform: translateY(-50%); }
+.surround-label.right { right: -20px; top: 50%; transform: translateY(-50%); }
+
+/* ==================== MASTER OUTPUT SECTION ==================== */
+.master-section {
+background: linear-gradient(135deg, var(--bg-card), rgba(99, 102, 241, 0.05));
+border-radius: 20px;
+padding: 25px;
+border: 1px solid var(--border);
+margin-top: 25px;
+}
+
+.master-header {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 25px;
+padding-bottom: 15px;
+border-bottom: 1px solid var(--border);
+}
+
+.master-title {
+display: flex;
+align-items: center;
+gap: 12px;
+font-size: 18px;
+font-weight: 700;
+}
+
+.master-title i {
+width: 40px;
+height: 40px;
+background: linear-gradient(135deg, var(--primary), var(--secondary));
+border-radius: 10px;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+
+.master-grid {
+display: grid;
+grid-template-columns: 1fr 300px;
+gap: 30px;
+}
+
+.master-controls {
+display: flex;
+flex-direction: column;
+gap: 20px;
+}
+
+.master-volume-container {
+display: flex;
+align-items: center;
+gap: 20px;
+padding: 20px;
+background: rgba(0,0,0,0.2);
+border-radius: 15px;
+}
+
+.master-fader {
+flex: 1;
+display: flex;
+flex-direction: column;
+gap: 10px;
+}
+
+.master-fader-label {
+display: flex;
+justify-content: space-between;
+align-items: center;
+}
+
+.master-fader-label span {
+font-size: 14px;
+font-weight: 600;
+}
+
+.master-db-value {
+font-size: 24px;
+font-weight: 700;
+color: var(--primary);
+min-width: 80px;
+text-align: right;
+}
+
+.master-slider {
+-webkit-appearance: none;
+width: 100%;
+height: 10px;
+background: linear-gradient(90deg,
+var(--success) 0%,
+var(--success) 70%,
+var(--warning) 85%,
+var(--danger) 100%
+);
+border-radius: 5px;
+cursor: pointer;
+}
+
+.master-slider::-webkit-slider-thumb {
+-webkit-appearance: none;
+width: 24px;
+height: 24px;
+background: white;
+border-radius: 50%;
+cursor: pointer;
+box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+/* Level Meters */
+.level-meters {
+display: flex;
+flex-direction: column;
+gap: 15px;
+}
+
+.meter-container {
+display: flex;
+align-items: center;
+gap: 15px;
+}
+
+.meter-label {
+font-size: 12px;
+font-weight: 600;
+min-width: 25px;
+color: var(--text-secondary);
+}
+
+.meter-bar {
+flex: 1;
+height: 12px;
+background: rgba(255,255,255,0.1);
+border-radius: 6px;
+overflow: hidden;
+position: relative;
+}
+
+.meter-fill {
+height: 100%;
+background: linear-gradient(90deg,
+var(--success) 0%,
+var(--success) 60%,
+var(--warning) 80%,
+var(--danger) 100%
+);
+width: 0%;
+transition: width 0.05s ease;
+border-radius: 6px;
+}
+
+.meter-peak {
+position: absolute;
+top: 0;
+width: 3px;
+height: 100%;
+background: white;
+border-radius: 2px;
+transition: left 0.1s ease;
+}
+
+.meter-scale {
+display: flex;
+justify-content: space-between;
+font-size: 9px;
+color: var(--text-secondary);
+margin-top: 5px;
+padding: 0 5px;
+}
+
+.peak-display {
+display: flex;
+gap: 20px;
+margin-top: 15px;
+}
+
+.peak-item {
+flex: 1;
+padding: 12px;
+background: rgba(0,0,0,0.2);
+border-radius: 10px;
+text-align: center;
+}
+
+.peak-item-label {
+font-size: 11px;
+color: var(--text-secondary);
+margin-bottom: 5px;
+}
+
+.peak-item-value {
+font-size: 18px;
+font-weight: 700;
+}
+
+.peak-item-value.good { color: var(--success); }
+.peak-item-value.warning { color: var(--warning); }
+.peak-item-value.danger { color: var(--danger); }
+
+/* Limiter & Compressor */
+.processor-section {
+display: grid;
+grid-template-columns: repeat(2, 1fr);
+gap: 20px;
+}
+
+.processor-card {
+padding: 20px;
+background: rgba(0,0,0,0.2);
+border-radius: 15px;
+}
+
+.processor-header {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 15px;
+}
+
+.processor-title {
+font-size: 14px;
+font-weight: 600;
+display: flex;
+align-items: center;
+gap: 8px;
+}
+
+.processor-title i {
+color: var(--primary);
+}
+
+.gain-reduction-meter {
+height: 8px;
+background: rgba(255,255,255,0.1);
+border-radius: 4px;
+overflow: hidden;
+margin-top: 15px;
+}
+
+.gain-reduction-fill {
+height: 100%;
+background: var(--warning);
+width: 0%;
+transition: width 0.1s ease;
+border-radius: 4px;
+}
+
+.gr-label {
+display: flex;
+justify-content: space-between;
+font-size: 10px;
+color: var(--text-secondary);
+margin-top: 5px;
+}
+
+/* Output Ceiling */
+.ceiling-control {
+display: flex;
+align-items: center;
+gap: 15px;
+padding: 15px;
+background: rgba(0,0,0,0.2);
+border-radius: 12px;
+margin-top: 20px;
+}
+
+.ceiling-control label {
+font-size: 13px;
+font-weight: 500;
+min-width: 100px;
+}
+
+.ceiling-value {
+font-size: 16px;
+font-weight: 700;
+color: var(--primary);
+min-width: 60px;
+text-align: center;
+}
+
+/* Normalize Button */
+.normalize-btn {
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 10px;
+padding: 15px 25px;
+background: linear-gradient(135deg, var(--accent), var(--primary));
+border: none;
+border-radius: 12px;
+color: white;
+font-size: 14px;
+font-weight: 600;
+cursor: pointer;
+transition: all 0.3s ease;
+margin-top: 20px;
+}
+
+.normalize-btn:hover {
+transform: translateY(-2px);
+box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4);
+}
+
+.normalize-btn:disabled {
+opacity: 0.5;
+cursor: not-allowed;
+transform: none;
+}
+
+/* VU Meter Style */
+.vu-meter-container {
+display: flex;
+flex-direction: column;
+align-items: center;
+padding: 20px;
+background: rgba(0,0,0,0.3);
+border-radius: 15px;
+}
+
+.vu-meter {
+width: 100%;
+height: 200px;
+position: relative;
+display: flex;
+justify-content: center;
+gap: 15px;
+}
+
+.vu-channel {
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 10px;
+}
+
+.vu-bar-container {
+width: 40px;
+height: 180px;
+background: rgba(255,255,255,0.05);
+border-radius: 8px;
+position: relative;
+overflow: hidden;
+display: flex;
+flex-direction: column-reverse;
+}
+
+.vu-bar-fill {
+width: 100%;
+background: linear-gradient(to top,
+var(--success) 0%,
+var(--success) 60%,
+var(--warning) 80%,
+var(--danger) 100%
+);
+transition: height 0.05s ease;
+}
+
+.vu-bar-peak {
+position: absolute;
+left: 0;
+right: 0;
+height: 4px;
+background: white;
+border-radius: 2px;
+transition: bottom 0.1s ease;
+}
+
+.vu-scale {
+position: absolute;
+right: -25px;
+top: 0;
+height: 100%;
+display: flex;
+flex-direction: column;
+justify-content: space-between;
+font-size: 9px;
+color: var(--text-secondary);
+}
+
+.vu-channel-label {
+font-size: 12px;
+font-weight: 600;
+color: var(--text-secondary);
+}
+
+.vu-db-display {
+display: flex;
+justify-content: center;
+gap: 30px;
+margin-top: 15px;
+}
+
+.vu-db-item {
+text-align: center;
+}
+
+.vu-db-value {
+font-size: 20px;
+font-weight: 700;
+font-family: 'Courier New', monospace;
+}
+
+.vu-db-label {
+font-size: 10px;
+color: var(--text-secondary);
+}
+
+/* Equalizer Page */
+.eq-container {
+background: var(--bg-card);
+border-radius: 20px;
+padding: 30px;
+border: 1px solid var(--border);
+}
+
+.eq-visualizer {
+display: flex;
+justify-content: center;
+align-items: flex-end;
+height: 280px;
+gap: 20px;
+padding: 20px;
+background: rgba(0,0,0,0.3);
+border-radius: 15px;
+margin-bottom: 25px;
+}
+
+.eq-band {
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 10px;
+}
+
+.eq-band-slider {
+-webkit-appearance: slider-vertical;
+width: 30px;
+height: 180px;
+cursor: pointer;
+}
+
+.eq-band-label {
+font-size: 10px;
+color: var(--text-secondary);
+}
+
+.eq-band-value {
+font-size: 11px;
+font-weight: 600;
+color: var(--primary);
+}
+
+.eq-presets {
+display: grid;
+grid-template-columns: repeat(5, 1fr);
+gap: 10px;
+margin-top: 20px;
+}
+
+/* Render Page */
+.render-layout {
+display: grid;
+grid-template-columns: 1fr 400px;
+gap: 30px;
+}
+
+.render-main {
+display: flex;
+flex-direction: column;
+gap: 25px;
+}
+
+.render-preview {
+background: var(--bg-card);
+border-radius: 20px;
+padding: 30px;
+border: 1px solid var(--border);
+}
+
+.render-waveform {
+height: 150px;
+background: rgba(0,0,0,0.3);
+border-radius: 12px;
+margin-bottom: 20px;
+overflow: hidden;
+}
+
+#renderWaveformCanvas {
+width: 100%;
+height: 100%;
+}
+
+.render-track-info {
+display: flex;
+align-items: center;
+gap: 20px;
+}
+
+.render-track-art {
+width: 80px;
+height: 80px;
+background: linear-gradient(135deg, var(--primary), var(--secondary));
+border-radius: 12px;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 30px;
+}
+
+.fx-summary {
+background: var(--bg-card);
+border-radius: 20px;
+padding: 25px;
+border: 1px solid var(--border);
+}
+
+.fx-summary-header {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 20px;
+padding-bottom: 15px;
+border-bottom: 1px solid var(--border);
+}
+
+.fx-summary-list {
+display: flex;
+flex-direction: column;
+gap: 12px;
+}
+
+.fx-summary-item {
+display: flex;
+justify-content: space-between;
+align-items: center;
+padding: 12px 15px;
+background: rgba(255,255,255,0.03);
+border-radius: 10px;
+}
+
+.fx-summary-item-left {
+display: flex;
+align-items: center;
+gap: 12px;
+}
+
+.fx-summary-item i {
+width: 32px;
+height: 32px;
+background: rgba(99, 102, 241, 0.2);
+border-radius: 8px;
+display: flex;
+align-items: center;
+justify-content: center;
+color: var(--primary);
+font-size: 14px;
+}
+
+.fx-status {
+font-size: 11px;
+padding: 4px 10px;
+border-radius: 5px;
+}
+
+.fx-status.on {
+background: rgba(16, 185, 129, 0.2);
+color: var(--success);
+}
+
+.fx-status.off {
+background: rgba(255,255,255,0.1);
+color: var(--text-secondary);
+}
+
+/* Render Settings */
+.render-settings {
+display: flex;
+flex-direction: column;
+gap: 20px;
+}
+
+.render-option {
+background: var(--bg-card);
+border-radius: 15px;
+padding: 20px;
+border: 1px solid var(--border);
+}
+
+.render-option h4 {
+font-size: 14px;
+margin-bottom: 12px;
+display: flex;
+align-items: center;
+gap: 8px;
+}
+
+.render-option h4 i {
+color: var(--primary);
+}
+
+.format-options {
+display: grid;
+grid-template-columns: repeat(2, 1fr);
+gap: 10px;
+}
+
+.format-btn {
+padding: 15px;
+background: rgba(255,255,255,0.05);
+border: 2px solid var(--border);
+border-radius: 10px;
+color: var(--text-secondary);
+cursor: pointer;
+transition: all 0.3s;
+text-align: center;
+}
+
+.format-btn:hover {
+border-color: var(--primary);
+background: rgba(99, 102, 241, 0.1);
+}
+
+.format-btn.active {
+border-color: var(--primary);
+background: rgba(99, 102, 241, 0.2);
+color: var(--text-primary);
+}
+
+.format-btn i {
+font-size: 24px;
+margin-bottom: 8px;
+display: block;
+}
+
+.quality-select {
+width: 100%;
+padding: 12px 15px;
+background: var(--bg-elevated);
+border: 1px solid var(--border);
+border-radius: 10px;
+color: var(--text-primary);
+font-size: 14px;
+cursor: pointer;
+}
+
+.render-actions {
+background: linear-gradient(135deg, var(--bg-card), rgba(99, 102, 241, 0.1));
+border-radius: 20px;
+padding: 25px;
+border: 1px solid var(--border);
+text-align: center;
+}
+
+.render-btn-group {
+display: flex;
+gap: 15px;
+justify-content: center;
+}
+
+/* Render Progress Modal */
+.render-progress-overlay {
+display: none;
+position: fixed;
+top: 0;
+left: 0;
+right: 0;
+bottom: 0;
+background: rgba(0,0,0,0.8);
+z-index: 1000;
+align-items: center;
+justify-content: center;
+backdrop-filter: blur(5px);
+}
+
+.render-progress-overlay.active {
+display: flex;
+}
+
+.render-progress-modal {
+background: var(--bg-card);
+border-radius: 20px;
+padding: 40px;
+width: 90%;
+max-width: 500px;
+text-align: center;
+border: 1px solid var(--border);
+}
+
+.render-progress-icon {
+width: 80px;
+height: 80px;
+margin: 0 auto 25px;
+background: linear-gradient(135deg, var(--primary), var(--secondary));
+border-radius: 50%;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 35px;
+animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+0%, 100% { transform: scale(1); }
+50% { transform: scale(1.1); }
+}
+
+.render-progress-icon.complete {
+background: var(--success);
+animation: none;
+}
+
+.progress-bar-render {
+height: 8px;
+background: rgba(255,255,255,0.1);
+border-radius: 4px;
+overflow: hidden;
+margin: 20px 0;
+}
+
+.progress-bar-render-fill {
+height: 100%;
+background: linear-gradient(90deg, var(--primary), var(--secondary));
+width: 0%;
+transition: width 0.3s ease;
+}
+
+.render-complete-actions {
+display: none;
+flex-direction: column;
+gap: 15px;
+margin-top: 25px;
+}
+
+.render-complete-actions.show {
+display: flex;
+}
+
+.download-info {
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 15px;
+padding: 15px;
+background: rgba(255,255,255,0.05);
+border-radius: 10px;
+}
+
+.download-info i {
+font-size: 24px;
+color: var(--success);
+}
+
+/* Settings Page */
+.settings-grid {
+display: grid;
+grid-template-columns: 220px 1fr;
+gap: 30px;
+}
+
+.settings-nav {
+background: var(--bg-card);
+border-radius: 15px;
+padding: 15px;
+border: 1px solid var(--border);
+height: fit-content;
+}
+
+.settings-nav-item {
+display: flex;
+align-items: center;
+gap: 12px;
+padding: 12px 15px;
+border-radius: 10px;
+color: var(--text-secondary);
+cursor: pointer;
+transition: all 0.3s;
+margin-bottom: 5px;
+}
+
+.settings-nav-item:hover {
+background: var(--bg-card-hover);
+color: var(--text-primary);
+}
+
+.settings-nav-item.active {
+background: rgba(99, 102, 241, 0.2);
+color: var(--primary);
+}
+
+.settings-content {
+background: var(--bg-card);
+border-radius: 15px;
+padding: 30px;
+border: 1px solid var(--border);
+}
+
+.settings-section {
+margin-bottom: 30px;
+}
+
+.settings-section-title {
+font-size: 16px;
+font-weight: 600;
+margin-bottom: 20px;
+padding-bottom: 12px;
+border-bottom: 1px solid var(--border);
+}
+
+.setting-item {
+display: flex;
+justify-content: space-between;
+align-items: center;
+padding: 15px 0;
+border-bottom: 1px solid var(--border);
+}
+
+.setting-info h4 {
+font-size: 14px;
+margin-bottom: 3px;
+}
+
+.setting-info p {
+font-size: 12px;
+color: var(--text-secondary);
+}
+
+/* Mobile */
+.mobile-menu-btn {
+display: none;
+position: fixed;
+top: 20px;
+left: 20px;
+z-index: 200;
+width: 45px;
+height: 45px;
+background: var(--bg-card);
+border: 1px solid var(--border);
+border-radius: 10px;
+color: var(--text-primary);
+cursor: pointer;
+align-items: center;
+justify-content: center;
+}
+
+/* Toast */
+.toast {
+position: fixed;
+bottom: 30px;
+left: 50%;
+transform: translateX(-50%) translateY(100px);
+background: var(--bg-card);
+padding: 15px 25px;
+border-radius: 12px;
+box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+z-index: 1000;
+display: flex;
+align-items: center;
+gap: 12px;
+transition: transform 0.3s ease;
+border: 1px solid var(--border);
+}
+
+.toast.show {
+transform: translateX(-50%) translateY(0);
+}
+
+.toast i { color: var(--success); font-size: 18px; }
+.toast.error i { color: var(--danger); }
+
+/* Responsive */
+@media (max-width: 1200px) {
+.home-grid, .render-layout, .master-grid { grid-template-columns: 1fr; }
+.fx-grid { grid-template-columns: 1fr; }
+.fx-card.full-width { grid-column: span 1; }
+.processor-section { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 900px) {
+.sidebar { transform: translateX(-100%); }
+.sidebar.open { transform: translateX(0); }
+.main-content { margin-left: 0; }
+.mobile-menu-btn { display: flex; }
+.settings-grid { grid-template-columns: 1fr; }
+.presets-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 600px) {
+.page-header { flex-direction: column; gap: 15px; align-items: flex-start; }
+.playlist-table-header, .playlist-row {
+grid-template-columns: 40px 1fr 60px 50px;
+}
+.eq-presets { grid-template-columns: repeat(2, 1fr); }
+}
+
+#fileInput { display: none; }
+</style>
+</head>
+<body>
+<div class="app-container">
+<!-- Mobile Menu -->
+<button class="mobile-menu-btn" id="mobileMenuBtn">
+<i class="fas fa-bars"></i>
+</button>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+<div class="sidebar-header">
+<div class="logo">
+<div class="logo-icon"><i class="fas fa-headphones-alt"></i></div>
+<div class="logo-text">
+<h1>ProAudio</h1>
+<span>Studio Edition</span>
+</div>
+</div>
+</div>
+
+<nav class="nav-section">
+<p class="nav-label">Menu</p>
+<ul class="nav-menu">
+<li class="nav-item">
+<a class="nav-link active" data-page="home">
+<i class="fas fa-home"></i><span>Home</span>
+</a>
+</li>
+<li class="nav-item">
+<a class="nav-link" data-page="playlist">
+<i class="fas fa-list"></i><span>Playlist</span>
+<span class="nav-badge" id="playlistBadge">0</span>
+</a>
+</li>
+</ul>
+
+<p class="nav-label">Audio</p>
+<ul class="nav-menu">
+<li class="nav-item">
+<a class="nav-link" data-page="effects">
+<i class="fas fa-sliders-h"></i><span>Audio FX</span>
+</a>
+</li>
+<li class="nav-item">
+<a class="nav-link" data-page="master">
+<i class="fas fa-broadcast-tower"></i><span>Master Output</span>
+<span class="nav-badge new">Pro</span>
+</a>
+</li>
+<li class="nav-item">
+<a class="nav-link" data-page="equalizer">
+<i class="fas fa-chart-bar"></i><span>Equalizer</span>
+</a>
+</li>
+</ul>
+
+<p class="nav-label">Export</p>
+<ul class="nav-menu">
+<li class="nav-item">
+<a class="nav-link" data-page="render">
+<i class="fas fa-download"></i><span>Render & Export</span>
+</a>
+</li>
+</ul>
+
+<p class="nav-label">System</p>
+<ul class="nav-menu">
+<li class="nav-item">
+<a class="nav-link" data-page="settings">
+<i class="fas fa-cog"></i><span>Settings</span>
+</a>
+</li>
+</ul>
+</nav>
+
+<!-- Mini Player -->
+<div class="mini-player">
+<div class="mini-player-info">
+<div class="mini-album-art"><i class="fas fa-music"></i></div>
+<div class="mini-track-info">
+<div class="mini-track-title" id="miniTrackTitle">No Track</div>
+<div class="mini-track-artist" id="miniTrackArtist">Select a song</div>
+</div>
+</div>
+<div class="mini-controls">
+<button class="mini-btn" id="miniPrevBtn"><i class="fas fa-step-backward"></i></button>
+<button class="mini-btn play" id="miniPlayBtn"><i class="fas fa-play"></i></button>
+<button class="mini-btn" id="miniNextBtn"><i class="fas fa-step-forward"></i></button>
+</div>
+<div class="mini-progress">
+<div class="mini-progress-fill" id="miniProgressFill"></div>
+</div>
+</div>
+</aside>
+
+<!-- Main Content -->
+<main class="main-content">
+<!-- HOME PAGE -->
+<div class="page active" id="page-home">
+<header class="page-header">
+<div>
+<h1 class="page-title">Dashboard</h1>
+<p class="page-subtitle">Welcome to ProAudio Studio</p>
+</div>
+<div class="page-actions">
+<label for="fileInput" class="btn btn-primary">
+<i class="fas fa-plus"></i> Add Music
+</label>
+</div>
+</header>
+
+<div class="home-grid">
+<div class="visualizer-section">
+<div class="visualizer-header">
+<h3 class="visualizer-title"><i class="fas fa-wave-square"></i> Visualizer</h3>
+<div class="visualizer-modes">
+<button class="viz-mode-btn active" data-mode="bars">Bars</button>
+<button class="viz-mode-btn" data-mode="wave">Wave</button>
+<button class="viz-mode-btn" data-mode="circle">Circle</button>
+</div>
+</div>
+<canvas id="visualizerCanvas"></canvas>
+</div>
+
+<div class="now-playing-card">
+<div class="album-art-large">
+<div class="album-art-img" id="albumArt"><i class="fas fa-music"></i></div>
+</div>
+<div class="track-info-large">
+<h2 class="track-title-large" id="trackTitle">No Track Selected</h2>
+<p class="track-artist-large" id="trackArtist">Select a song to play</p>
+</div>
+<div class="progress-section">
+<div class="progress-bar-large" id="progressBar">
+<div class="progress-fill-large" id="progressFill"></div>
+</div>
+<div class="time-display">
+<span id="currentTime">0:00</span>
+<span id="duration">0:00</span>
+</div>
+</div>
+<div class="main-controls">
+<button class="ctrl-btn" id="shuffleBtn"><i class="fas fa-random"></i></button>
+<button class="ctrl-btn" id="prevBtn"><i class="fas fa-step-backward"></i></button>
+<button class="ctrl-btn play-main" id="playBtn"><i class="fas fa-play"></i></button>
+<button class="ctrl-btn" id="nextBtn"><i class="fas fa-step-forward"></i></button>
+<button class="ctrl-btn" id="repeatBtn"><i class="fas fa-redo"></i></button>
+</div>
+<div class="volume-section">
+<i class="fas fa-volume-down"></i>
+<input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="80">
+<i class="fas fa-volume-up"></i>
+<span id="volumeValue" style="min-width:40px;text-align:center;">80%</span>
+</div>
+</div>
+</div>
+</div>
+
+<!-- PLAYLIST PAGE -->
+<div class="page" id="page-playlist">
+<header class="page-header">
+<h1 class="page-title">Playlist</h1>
+<div class="page-actions">
+<button class="btn btn-secondary" id="clearPlaylistBtn">
+<i class="fas fa-trash"></i> Clear All
+</button>
+<label for="fileInput" class="btn btn-primary">
+<i class="fas fa-plus"></i> Add Music
+</label>
+</div>
+</header>
+
+<div class="playlist-header-section">
+<div class="playlist-info">
+<div class="playlist-cover"><i class="fas fa-music"></i></div>
+<div>
+<h2>My Playlist</h2>
+<p><span id="playlistCount">0</span> tracks</p>
+</div>
+</div>
+</div>
+
+<div class="playlist-table">
+<div class="playlist-table-header">
+<span>#</span>
+<span>Title</span>
+<span>Status</span>
+<span>Duration</span>
+<span></span>
+</div>
+<div id="playlistBody">
+<div class="playlist-empty">
+<i class="fas fa-folder-open"></i>
+<h3>Playlist is empty</h3>
+<p style="color:var(--text-secondary);margin:10px 0 20px;">Add music to get started</p>
+<label for="fileInput" class="btn btn-primary"><i class="fas fa-plus"></i> Add Music</label>
+</div>
+</div>
+</div>
+</div>
+
+<!-- AUDIO FX PAGE -->
+<div class="page" id="page-effects">
+<header class="page-header">
+<h1 class="page-title">Audio Effects</h1>
+<div class="page-actions">
+<button class="btn btn-secondary" id="resetFxBtn">
+<i class="fas fa-undo"></i> Reset All
+</button>
+</div>
+</header>
+
+<div class="fx-grid">
+<!-- Bass -->
+<div class="fx-card">
+<div class="fx-card-header">
+<div class="fx-card-title"><i class="fas fa-drum"></i><span>Bass</span></div>
+<div class="fx-toggle active" id="bassToggle"></div>
+</div>
+<div class="fx-slider-group">
+<div class="fx-slider-header">
+<span class="fx-slider-label">Gain</span>
+<span class="fx-slider-value" id="bassValue">0 dB</span>
+</div>
+<input type="range" class="fx-slider" id="bassSlider" min="-12" max="12" value="0">
+</div>
+<div class="fx-slider-group">
+<div class="fx-slider-header">
+<span class="fx-slider-label">Frequency</span>
+<span class="fx-slider-value" id="bassFreqValue">200 Hz</span>
+</div>
+<input type="range" class="fx-slider" id="bassFreqSlider" min="60" max="250" value="200">
+</div>
+</div>
+
+<!-- Treble -->
+<div class="fx-card">
+<div class="fx-card-header">
+<div class="fx-card-title"><i class="fas fa-bell"></i><span>Treble</span></div>
+<div class="fx-toggle active" id="trebleToggle"></div>
+</div>
+<div class="fx-slider-group">
+<div class="fx-slider-header">
+<span class="fx-slider-label">Gain</span>
+<span class="fx-slider-value" id="trebleValue">0 dB</span>
+</div>
+<input type="range" class="fx-slider" id="trebleSlider" min="-12" max="12" value="0">
+</div>
+<div class="fx-slider-group">
+<div class="fx-slider-header">
+<span class="fx-slider-label">Frequency</span>
+<span class="fx-slider-value" id="trebleFreqValue">3000 Hz</span>
+</div>
+<input type="range" class="fx-slider" id="trebleFreqSlider" min="2000" max="8000" value="3000">
+</div>
+</div>
+
+<!-- Reverb -->
+<div class="fx-card">
+<div class="fx-card-header">
+<div class="fx-card-title"><i class="fas fa-water"></i><span>Reverb</span></div>
+<div class="fx-toggle" id="reverbToggle"></div>
+</div>
+<div class="fx-slider-group">
+<div class="fx-slider-header">
+<span class="fx-slider-label">Mix</span>
+<span class="fx-slider-value" id="reverbValue">30%</span>
+</div>
+<input type="range" class="fx-slider" id="reverbSlider" min="0" max="100" value="30">
+</div>
+<div class="fx-slider-group">
+<div class="fx-slider-header">
+<span class="fx-slider-label">Decay</span>
+<span class="fx-slider-value" id="reverbDecayValue">2.0s</span>
+</div>
+<input type="range" class="fx-slider" id="reverbDecaySlider" min="5" max="50" value="20">
+</div>
+</div>
+
+<!-- 3D Surround -->
+<div class="fx-card">
+<div class="fx-card-header">
+<div class="fx-card-title"><i class="fas fa-cube"></i><span>3D Surround</span></div>
+<div class="fx-toggle" id="surroundToggle"></div>
+</div>
+<div class="fx-slider-group">
+<div class="fx-slider-header">
+<span class="fx-slider-label">Intensity</span>
+<span class="fx-slider-value" id="surroundValue">50%</span>
+</div>
+<input type="range" class="fx-slider" id="surroundSlider" min="0" max="100" value="50">
+</div>
+<div class="fx-slider-group">
+<div class="fx-slider-header">
+<span class="fx-slider-label">Speed</span>
+<span class="fx-slider-value" id="surroundSpeedValue">5</span>
+</div>
+<input type="range" class="fx-slider" id="surroundSpeedSlider" min="1" max="10" value="5">
+</div>
+<div class="surround-visual">
+<span class="surround-label top">Front</span>
+<span class="surround-label bottom">Back</span>
+<span class="surround-label left">L</span>
+<span class="surround-label right">R</span>
+<div class="surround-dot" id="surroundDot"></div>
+</div>
+</div>
+
+<!-- Presets -->
+<div class="fx-card full-width">
+<div class="fx-card-header">
+<div class="fx-card-title"><i class="fas fa-magic"></i><span>Quick Presets</span></div>
+</div>
+<div class="presets-grid">
+<button class="preset-btn" data-preset="flat"><i class="fas fa-minus"></i><span>Flat</span></button>
+<button class="preset-btn" data-preset="rock"><i class="fas fa-guitar"></i><span>Rock</span></button>
+<button class="preset-btn" data-preset="pop"><i class="fas fa-star"></i><span>Pop</span></button>
+<button class="preset-btn" data-preset="jazz"><i class="fas fa-music"></i><span>Jazz</span></button>
+<button class="preset-btn" data-preset="classical"><i class="fas fa-theater-masks"></i><span>Classical</span></button>
+<button class="preset-btn" data-preset="bass-boost"><i class="fas fa-drum"></i><span>Bass Boost</span></button>
+<button class="preset-btn" data-preset="vocal"><i class="fas fa-microphone"></i><span>Vocal</span></button>
+<button class="preset-btn" data-preset="electronic"><i class="fas fa-bolt"></i><span>Electronic</span></button>
+</div>
+</div>
+</div>
+</div>
+
+<!-- ==================== MASTER OUTPUT PAGE ==================== -->
+<div class="page" id="page-master">
+<header class="page-header">
+<div>
+<h1 class="page-title">Master Output</h1>
+<p class="page-subtitle">Professional level control and dynamics processing</p>
+</div>
+<div class="page-actions">
+<button class="btn btn-secondary" id="resetMasterBtn">
+<i class="fas fa-undo"></i> Reset
+</button>
+</div>
+</header>
+
+<div class="master-grid">
+<!-- Left: Controls -->
+<div class="master-controls">
+<!-- Master Volume -->
+<div class="master-section" style="margin-top:0;">
+<div class="master-header">
+<div class="master-title">
+<i class="fas fa-sliders-h"></i>
+<span>Master Volume</span>
+</div>
+<div class="fx-toggle active" id="masterToggle"></div>
+</div>
+
+<div class="master-volume-container">
+<div class="master-fader">
+<div class="master-fader-label">
+<span><i class="fas fa-volume-up"></i> Output Level</span>
+<span class="master-db-value" id="masterDbValue">0.0 dB</span>
+</div>
+<input type="range" class="master-slider" id="masterSlider" min="-60" max="12" value="0" step="0.1">
+</div>
+</div>
+
+<!-- Output Ceiling -->
+<div class="ceiling-control">
+<label><i class="fas fa-arrow-up"></i> Output Ceiling</label>
+<input type="range" class="fx-slider" id="ceilingSlider" min="-12" max="0" value="-0.1" step="0.1" style="flex:1;">
+<span class="ceiling-value" id="ceilingValue">-0.1 dB</span>
+</div>
+
+<!-- Level Meters -->
+<div class="level-meters" style="margin-top:25px;">
+<div class="meter-container">
+<span class="meter-label">L</span>
+<div class="meter-bar">
+<div class="meter-fill" id="meterFillL"></div>
+<div class="meter-peak" id="meterPeakL"></div>
+</div>
+</div>
+<div class="meter-container">
+<span class="meter-label">R</span>
+<div class="meter-bar">
+<div class="meter-fill" id="meterFillR"></div>
+<div class="meter-peak" id="meterPeakR"></div>
+</div>
+</div>
+<div class="meter-scale">
+<span>-∞</span>
+<span>-48</span>
+<span>-24</span>
+<span>-12</span>
+<span>-6</span>
+<span>0</span>
+</div>
+</div>
+
+<!-- Peak Display -->
+<div class="peak-display">
+<div class="peak-item">
+<div class="peak-item-label">Peak L</div>
+<div class="peak-item-value good" id="peakValueL">-∞ dB</div>
+</div>
+<div class="peak-item">
+<div class="peak-item-label">Peak R</div>
+<div class="peak-item-value good" id="peakValueR">-∞ dB</div>
+</div>
+<div class="peak-item">
+<div class="peak-item-label">RMS</div>
+<div class="peak-item-value good" id="rmsValue">-∞ dB</div>
+</div>
+<div class="peak-item">
+<div class="peak-item-label">LUFS</div>
+<div class="peak-item-value good" id="lufsValue">-∞</div>
+</div>
+</div>
+</div>
+
+<!-- Limiter & Compressor -->
+<div class="processor-section">
+<!-- Limiter -->
+<div class="processor-card">
+<div class="processor-header">
+<div class="processor-title">
+<i class="fas fa-shield-alt"></i>
+<span>Limiter</span>
+</div>
+<div class="fx-toggle active" id="limiterToggle"></div>
+</div>
+<div class="fx-slider-group">
+<div class="fx-slider-header">
+<span class="fx-slider-label">Threshold</span>
+<span class="fx-slider-value" id="limiterThresholdValue">-1.0 dB</span>
+</div>
+<input type="range" class="fx-slider" id="limiterThresholdSlider" min="-20" max="0" value="-1" step="0.1">
+</div>
+<div class="fx-slider-group">
+<div class="fx-slider-header">
+<span class="fx-slider-label">Release</span>
+<span class="fx-slider-value" id="limiterReleaseValue">100 ms</span>
+</div>
+<input type="range" class="fx-slider" id="limiterReleaseSlider" min="10" max="500" value="100">
+</div>
+<div class="gain-reduction-meter">
+<div class="gain-reduction-fill" id="limiterGrFill"></div>
+</div>
+<div class="gr-label">
+<span>Gain Reduction</span>
+<span id="limiterGrValue">0 dB</span>
+</div>
+</div>
+
+<!-- Compressor -->
+<div class="processor-card">
+<div class="processor-header">
+<div class="processor-title">
+<i class="fas fa-compress-arrows-alt"></i>
+<span>Compressor</span>
+</div>
+<div class="fx-toggle" id="compressorToggle"></div>
+</div>
+<div class="fx-slider-group">
+<div class="fx-slider-header">
+<span class="fx-slider-label">Threshold</span>
+<span class="fx-slider-value" id="compThresholdValue">-24 dB</span>
+</div>
+<input type="range" class="fx-slider" id="compThresholdSlider" min="-60" max="0" value="-24">
+</div>
+<div class="fx-slider-group">
+<div class="fx-slider-header">
+<span class="fx-slider-label">Ratio</span>
+<span class="fx-slider-value" id="compRatioValue">4:1</span>
+</div>
+<input type="range" class="fx-slider" id="compRatioSlider" min="1" max="20" value="4">
+</div>
+<div class="fx-slider-group">
+<div class="fx-slider-header">
+<span class="fx-slider-label">Attack</span>
+<span class="fx-slider-value" id="compAttackValue">10 ms</span>
+</div>
+<input type="range" class="fx-slider" id="compAttackSlider" min="1" max="100" value="10">
+</div>
+<div class="fx-slider-group">
+<div class="fx-slider-header">
+<span class="fx-slider-label">Release</span>
+<span class="fx-slider-value" id="compReleaseValue">100 ms</span>
+</div>
+<input type="range" class="fx-slider" id="compReleaseSlider" min="10" max="1000" value="100">
+</div>
+<div class="fx-slider-group">
+<div class="fx-slider-header">
+<span class="fx-slider-label">Makeup Gain</span>
+<span class="fx-slider-value" id="compMakeupValue">0 dB</span>
+</div>
+<input type="range" class="fx-slider" id="compMakeupSlider" min="0" max="24" value="0">
+</div>
+<div class="gain-reduction-meter">
+<div class="gain-reduction-fill" id="compGrFill"></div>
+</div>
+<div class="gr-label">
+<span>Gain Reduction</span>
+<span id="compGrValue">0 dB</span>
+</div>
+</div>
+</div>
+
+<!-- Normalize Button -->
+<button class="normalize-btn" id="normalizeBtn">
+<i class="fas fa-magic"></i>
+Auto Normalize to Target Level
+</button>
+</div>
+
+<!-- Right: VU Meters -->
+<div class="vu-meter-container">
+<h3 style="margin-bottom:20px;text-align:center;">
+<i class="fas fa-tachometer-alt" style="color:var(--primary);margin-right:8px;"></i>
+VU Meter
+</h3>
+<div class="vu-meter">
+<div class="vu-channel">
+<div class="vu-bar-container">
+<div class="vu-bar-fill" id="vuFillL"></div>
+<div class="vu-bar-peak" id="vuPeakL"></div>
+</div>
+<span class="vu-channel-label">L</span>
+</div>
+<div class="vu-channel">
+<div class="vu-bar-container">
+<div class="vu-bar-fill" id="vuFillR"></div>
+<div class="vu-bar-peak" id="vuPeakR"></div>
+</div>
+<span class="vu-channel-label">R</span>
+</div>
+<div class="vu-scale">
+<span>+6</span>
+<span>0</span>
+<span>-6</span>
+<span>-12</span>
+<span>-24</span>
+<span>-48</span>
+<span>-∞</span>
+</div>
+</div>
+<div class="vu-db-display">
+<div class="vu-db-item">
+<div class="vu-db-value" id="vuDbL">-∞</div>
+<div class="vu-db-label">Left dB</div>
+</div>
+<div class="vu-db-item">
+<div class="vu-db-value" id="vuDbR">-∞</div>
+<div class="vu-db-label">Right dB</div>
+</div>
+</div>
+
+<!-- Target Level -->
+<div style="margin-top:30px;padding:20px;background:rgba(0,0,0,0.2);border-radius:15px;">
+<h4 style="margin-bottom:15px;"><i class="fas fa-bullseye" style="color:var(--secondary);margin-right:8px;"></i>Target Level</h4>
+<div class="fx-slider-group">
+<div class="fx-slider-header">
+<span class="fx-slider-label">Target LUFS</span>
+<span class="fx-slider-value" id="targetLufsValue">-14 LUFS</span>
+</div>
+<input type="range" class="fx-slider" id="targetLufsSlider" min="-24" max="-6" value="-14">
+</div>
+<div class="fx-slider-group">
+<div class="fx-slider-header">
+<span class="fx-slider-label">True Peak</span>
+<span class="fx-slider-value" id="truePeakValue">-1.0 dBTP</span>
+</div>
+<input type="range" class="fx-slider" id="truePeakSlider" min="-3" max="0" value="-1" step="0.1">
+</div>
+</div>
+
+<!-- Presets -->
+<div style="margin-top:20px;">
+<h4 style="margin-bottom:15px;"><i class="fas fa-bookmark" style="color:var(--primary);margin-right:8px;"></i>Mastering Presets</h4>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+<button class="preset-btn" data-master-preset="streaming"><span>Streaming</span></button>
+<button class="preset-btn" data-master-preset="cd"><span>CD Master</span></button>
+<button class="preset-btn" data-master-preset="broadcast"><span>Broadcast</span></button>
+<button class="preset-btn" data-master-preset="podcast"><span>Podcast</span></button>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- EQUALIZER PAGE -->
+<div class="page" id="page-equalizer">
+<header class="page-header">
+<h1 class="page-title">Equalizer</h1>
+<div class="page-actions">
+<button class="btn btn-secondary" id="resetEqBtn"><i class="fas fa-undo"></i> Reset</button>
+</div>
+</header>
+
+<div class="eq-container">
+<div class="eq-visualizer" id="eqVisualizer"></div>
+<div class="eq-presets">
+<button class="preset-btn active" data-eq="flat">Flat</button>
+<button class="preset-btn" data-eq="bass">Bass Heavy</button>
+<button class="preset-btn" data-eq="treble">Treble Heavy</button>
+<button class="preset-btn" data-eq="v-shape">V-Shape</button>
+<button class="preset-btn" data-eq="acoustic">Acoustic</button>
+</div>
+</div>
+</div>
+
+<!-- RENDER PAGE -->
+<div class="page" id="page-render">
+<header class="page-header">
+<div>
+<h1 class="page-title">Render & Export</h1>
+<p class="page-subtitle">Apply all effects and download your processed audio</p>
+</div>
+</header>
+
+<div class="render-layout">
+<div class="render-main">
+<div class="render-preview">
+<h3 style="margin-bottom:15px;">
+<i class="fas fa-music" style="color:var(--primary);margin-right:10px;"></i>Selected Track
+</h3>
+<div class="render-waveform">
+<canvas id="renderWaveformCanvas"></canvas>
+</div>
+<div class="render-track-info">
+<div class="render-track-art"><i class="fas fa-music"></i></div>
+<div>
+<h3 id="renderTrackName">No track selected</h3>
+<p id="renderTrackDuration" style="color:var(--text-secondary);">Select a track from playlist</p>
+</div>
+</div>
+</div>
+
+<div class="fx-summary">
+<div class="fx-summary-header">
+<span style="font-weight:600;">Applied Effects</span>
+<span class="nav-badge" id="activeFxCount">0 Active</span>
+</div>
+<div class="fx-summary-list">
+<div class="fx-summary-item">
+<div class="fx-summary-item-left">
+<i class="fas fa-drum"></i>
+<div><span style="font-size:13px;">Bass</span><br><small id="bassSummary" style="color:var(--text-secondary);">0 dB</small></div>
+</div>
+<span class="fx-status on" id="bassStatus">ON</span>
+</div>
+<div class="fx-summary-item">
+<div class="fx-summary-item-left">
+<i class="fas fa-bell"></i>
+<div><span style="font-size:13px;">Treble</span><br><small id="trebleSummary" style="color:var(--text-secondary);">0 dB</small></div>
+</div>
+<span class="fx-status on" id="trebleStatus">ON</span>
+</div>
+<div class="fx-summary-item">
+<div class="fx-summary-item-left">
+<i class="fas fa-water"></i>
+<div><span style="font-size:13px;">Reverb</span><br><small id="reverbSummary" style="color:var(--text-secondary);">30%</small></div>
+</div>
+<span class="fx-status off" id="reverbStatus">OFF</span>
+</div>
+<div class="fx-summary-item">
+<div class="fx-summary-item-left">
+<i class="fas fa-cube"></i>
+<div><span style="font-size:13px;">3D Surround</span><br><small id="surroundSummary" style="color:var(--text-secondary);">50%</small></div>
+</div>
+<span class="fx-status off" id="surroundStatus">OFF</span>
+</div>
+<div class="fx-summary-item">
+<div class="fx-summary-item-left">
+<i class="fas fa-broadcast-tower"></i>
+<div><span style="font-size:13px;">Master/Limiter</span><br><small id="masterSummary" style="color:var(--text-secondary);">0 dB, -1 dB Ceiling</small></div>
+</div>
+<span class="fx-status on" id="masterStatus">ON</span>
+</div>
+</div>
+</div>
+</div>
+
+<div class="render-settings">
+<div class="render-option">
+<h4><i class="fas fa-file-audio"></i> Output Format</h4>
+<div class="format-options">
+<button class="format-btn active" data-format="wav">
+<i class="fas fa-file-audio"></i>
+<span>WAV</span><small>Lossless</small>
+</button>
+<button class="format-btn" data-format="mp3">
+<i class="fas fa-file-audio"></i>
+<span>MP3</span><small>Compressed</small>
+</button>
+</div>
+</div>
+
+<div class="render-option">
+<h4><i class="fas fa-sliders-h"></i> Sample Rate</h4>
+<select class="quality-select" id="qualitySelect">
+<option value="44100">44.1 kHz (CD)</option>
+<option value="48000" selected>48 kHz (Standard)</option>
+<option value="96000">96 kHz (High)</option>
+</select>
+</div>
+
+<div class="render-option">
+<h4><i class="fas fa-cog"></i> Bit Depth</h4>
+<select class="quality-select" id="bitDepthSelect">
+<option value="16">16-bit</option>
+<option value="24" selected>24-bit</option>
+<option value="32">32-bit Float</option>
+</select>
+</div>
+
+<div class="render-actions">
+<h3><i class="fas fa-magic" style="color:var(--secondary);margin-right:8px;"></i>Ready to Render</h3>
+<p style="color:var(--text-secondary);margin:10px 0 20px;">Process audio with all effects including Master Output</p>
+<div class="render-btn-group">
+<button class="btn btn-primary btn-lg" id="renderBtn" disabled>
+<i class="fas fa-cogs"></i> Render
+</button>
+<button class="btn btn-success btn-lg" id="downloadBtn" disabled>
+<i class="fas fa-download"></i> Download
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SETTINGS PAGE -->
+<div class="page" id="page-settings">
+<header class="page-header">
+<h1 class="page-title">Settings</h1>
+</header>
+
+<div class="settings-grid">
+<nav class="settings-nav">
+<div class="settings-nav-item active"><i class="fas fa-play-circle"></i><span>Playback</span></div>
+<div class="settings-nav-item"><i class="fas fa-volume-up"></i><span>Audio</span></div>
+<div class="settings-nav-item"><i class="fas fa-palette"></i><span>Appearance</span></div>
+</nav>
+
+<div class="settings-content">
+<div class="settings-section">
+<h3 class="settings-section-title">Playback Settings</h3>
+<div class="setting-item">
+<div class="setting-info">
+<h4>Auto-play</h4>
+<p>Play next track automatically</p>
+</div>
+<div class="fx-toggle active" id="autoplayToggle"></div>
+</div>
+<div class="setting-item">
+<div class="setting-info">
+<h4>Crossfade</h4>
+<p>Smooth transitions</p>
+</div>
+<select class="quality-select">
+<option>Off</option>
+<option>3 seconds</option>
+<option>5 seconds</option>
+</select>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+
+<!-- Render Progress Modal -->
+<div class="render-progress-overlay" id="renderOverlay">
+<div class="render-progress-modal">
+<div class="render-progress-icon" id="renderIcon"><i class="fas fa-cogs"></i></div>
+<h2 id="renderModalTitle">Rendering Audio</h2>
+<p id="renderModalText" style="color:var(--text-secondary);">Applying effects...</p>
+<div class="progress-bar-render">
+<div class="progress-bar-render-fill" id="renderProgressFill"></div>
+</div>
+<p id="renderPercentage" style="font-size:24px;font-weight:700;color:var(--primary);">0%</p>
+<div class="render-complete-actions" id="renderCompleteActions">
+<div class="download-info">
+<i class="fas fa-check-circle"></i>
+<div style="text-align:left;">
+<span id="downloadFileName" style="font-weight:600;"></span><br>
+<small id="downloadFileSize" style="color:var(--text-secondary);"></small>
+</div>
+</div>
+<button class="btn btn-success btn-lg" id="finalDownloadBtn" style="width:100%;">
+<i class="fas fa-download"></i> Download Now
+</button>
+<button class="btn btn-secondary" id="closeRenderBtn" style="width:100%;">Close</button>
+</div>
+</div>
+</div>
+
+<input type="file" id="fileInput" accept="audio/*" multiple>
+
+<div class="toast" id="toast">
+<i class="fas fa-check-circle"></i>
+<span id="toastMessage">Success</span>
+</div>
+
+<script>
+// ==================== AUDIO ENGINE ====================
+class AudioEngine {
+constructor() {
+this.ctx = null;
+this.analyser = null;
+this.analyserL = null;
+this.analyserR = null;
+this.splitter = null;
+this.source = null;
+this.gain = null;
+this.masterGain = null;
+this.bass = null;
+this.treble = null;
+this.panner = null;
+this.convolver = null;
+this.dryGain = null;
+this.wetGain = null;
+this.compressor = null;
+this.limiter = null;
+this.eqFilters = [];
+
+this.settings = {
+bassGain: 0, bassFreq: 200,
+trebleGain: 0, trebleFreq: 3000,
+reverbMix: 0.3, reverbDecay: 2,
+surroundIntensity: 50, surroundSpeed: 5,
+eq: [0,0,0,0,0,0,0,0,0,0],
+masterLevel: 0,
+ceiling: -0.1,
+limiterThreshold: -1,
+limiterRelease: 100,
+compThreshold: -24,
+compRatio: 4,
+compAttack: 10,
+compRelease: 100,
+compMakeup: 0
+};
+
+this.reverbEnabled = false;
+this.surroundEnabled = false;
+this.limiterEnabled = true;
+this.compressorEnabled = false;
+this.surroundAngle = 0;
+this.surroundInterval = null;
+this.initialized = false;
+
+this.peakL = -Infinity;
+this.peakR = -Infinity;
+this.peakHoldL = -Infinity;
+this.peakHoldR = -Infinity;
+this.peakDecay = null;
+}
+
+async init() {
+if (this.initialized) return;
+
+this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+// Main analyser
+this.analyser = this.ctx.createAnalyser();
+this.analyser.fftSize = 512;
+
+// Stereo analysers for metering
+this.splitter = this.ctx.createChannelSplitter(2);
+this.analyserL = this.ctx.createAnalyser();
+this.analyserR = this.ctx.createAnalyser();
+this.analyserL.fftSize = 2048;
+this.analyserR.fftSize = 2048;
+
+// Gains
+this.gain = this.ctx.createGain();
+this.gain.gain.value = 0.8;
+
+this.masterGain = this.ctx.createGain();
+this.masterGain.gain.value = 1;
+
+// Filters
+this.bass = this.ctx.createBiquadFilter();
+this.bass.type = 'lowshelf';
+this.bass.frequency.value = 200;
+
+this.treble = this.ctx.createBiquadFilter();
+this.treble.type = 'highshelf';
+this.treble.frequency.value = 3000;
+
+this.panner = this.ctx.createStereoPanner();
+
+// Reverb
+this.convolver = this.ctx.createConvolver();
+await this.createReverb(2);
+this.dryGain = this.ctx.createGain();
+this.wetGain = this.ctx.createGain();
+this.wetGain.gain.value = 0;
+
+// Compressor
+this.compressor = this.ctx.createDynamicsCompressor();
+this.compressor.threshold.value = -24;
+this.compressor.ratio.value = 4;
+this.compressor.attack.value = 0.01;
+this.compressor.release.value = 0.1;
+
+// Limiter (actually a compressor with high ratio)
+this.limiter = this.ctx.createDynamicsCompressor();
+this.limiter.threshold.value = -1;
+this.limiter.ratio.value = 20;
+this.limiter.attack.value = 0.001;
+this.limiter.release.value = 0.1;
+this.limiter.knee.value = 0;
+
+// EQ
+const freqs = [32, 64, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
+freqs.forEach(f => {
+const filter = this.ctx.createBiquadFilter();
+filter.type = 'peaking';
+filter.frequency.value = f;
+filter.Q.value = 1;
+filter.gain.value = 0;
+this.eqFilters.push(filter);
+});
+
+this.initialized = true;
+this.startMetering();
+}
+
+async createReverb(decay) {
+const rate = this.ctx.sampleRate;
+const len = rate * decay;
+const buffer = this.ctx.createBuffer(2, len, rate);
+
+for (let ch = 0; ch < 2; ch++) {
+const data = buffer.getChannelData(ch);
+for (let i = 0; i < len; i++) {
+data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.5);
+}
+}
+this.convolver.buffer = buffer;
+}
+
+connect(audio) {
+if (this.source) try { this.source.disconnect(); } catch(e) {}
+this.source = this.ctx.createMediaElementSource(audio);
+this.rebuild();
+}
+
+rebuild() {
+if (!this.source) return;
+
+try {
+this.source.disconnect();
+this.eqFilters.forEach(f => f.disconnect());
+this.bass.disconnect();
+this.treble.disconnect();
+this.panner.disconnect();
+this.dryGain.disconnect();
+this.wetGain.disconnect();
+this.convolver.disconnect();
+this.gain.disconnect();
+this.compressor.disconnect();
+this.limiter.disconnect();
+this.masterGain.disconnect();
+this.analyser.disconnect();
+this.splitter.disconnect();
+} catch(e) {}
+
+let node = this.source;
+
+// EQ Chain
+this.eqFilters.forEach(f => { node.connect(f); node = f; });
+
+// Bass & Treble
+node.connect(this.bass);
+this.bass.connect(this.treble);
+this.treble.connect(this.panner);
+
+// Reverb
+if (this.reverbEnabled) {
+this.panner.connect(this.dryGain);
+this.panner.connect(this.convolver);
+this.convolver.connect(this.wetGain);
+this.dryGain.connect(this.gain);
+this.wetGain.connect(this.gain);
+} else {
+this.panner.connect(this.gain);
+}
+
+// Compressor
+if (this.compressorEnabled) {
+this.gain.connect(this.compressor);
+this.compressor.connect(this.masterGain);
+} else {
+this.gain.connect(this.masterGain);
+}
+
+// Limiter
+if (this.limiterEnabled) {
+this.masterGain.connect(this.limiter);
+this.limiter.connect(this.analyser);
+} else {
+this.masterGain.connect(this.analyser);
+}
+
+// Output
+this.analyser.connect(this.ctx.destination);
+
+// Metering
+this.analyser.connect(this.splitter);
+this.splitter.connect(this.analyserL, 0);
+this.splitter.connect(this.analyserR, 1);
+}
+
+setVolume(v) { this.gain.gain.value = v; }
+
+setMasterLevel(db) {
+this.settings.masterLevel = db;
+const linear = Math.pow(10, db / 20);
+this.masterGain.gain.setValueAtTime(linear, this.ctx.currentTime);
+}
+
+setCeiling(db) {
+this.settings.ceiling = db;
+}
+
+setLimiter(threshold, release) {
+this.settings.limiterThreshold = threshold;
+this.settings.limiterRelease = release;
+this.limiter.threshold.value = threshold;
+this.limiter.release.value = release / 1000;
+}
+
+setCompressor(threshold, ratio, attack, release, makeup) {
+this.settings.compThreshold = threshold;
+this.settings.compRatio = ratio;
+this.settings.compAttack = attack;
+this.settings.compRelease = release;
+this.settings.compMakeup = makeup;
+
+this.compressor.threshold.value = threshold;
+this.compressor.ratio.value = ratio;
+this.compressor.attack.value = attack / 1000;
+this.compressor.release.value = release / 1000;
+}
+
+setBass(g, f) {
+if (g !== null) { this.bass.gain.value = g; this.settings.bassGain = g; }
+if (f !== null) { this.bass.frequency.value = f; this.settings.bassFreq = f; }
+}
+
+setTreble(g, f) {
+if (g !== null) { this.treble.gain.value = g; this.settings.trebleGain = g; }
+if (f !== null) { this.treble.frequency.value = f; this.settings.trebleFreq = f; }
+}
+
+setReverb(on, mix) {
+this.reverbEnabled = on;
+this.settings.reverbMix = mix;
+this.dryGain.gain.value = on ? 1 - mix : 1;
+this.wetGain.gain.value = on ? mix : 0;
+this.rebuild();
+}
+
+async setReverbDecay(decay) {
+this.settings.reverbDecay = decay;
+await this.createReverb(decay);
+}
+
+setSurround(on, intensity, speed) {
+this.surroundEnabled = on;
+this.settings.surroundIntensity = intensity;
+this.settings.surroundSpeed = speed;
+
+if (this.surroundInterval) {
+clearInterval(this.surroundInterval);
+this.surroundInterval = null;
+}
+
+if (on) {
+this.surroundInterval = setInterval(() => {
+this.surroundAngle += 0.02 * speed;
+const pan = Math.sin(this.surroundAngle) * (intensity / 100);
+this.panner.pan.value = pan;
+
+const dot = document.getElementById('surroundDot');
+if (dot) {
+dot.style.transform = `translate(calc(-50% + ${pan * 55}px), calc(-50% + ${Math.cos(this.surroundAngle) * 35 * (intensity/100)}px))`;
+}
+}, 30);
+} else {
+this.panner.pan.value = 0;
+const dot = document.getElementById('surroundDot');
+if (dot) dot.style.transform = 'translate(-50%, -50%)';
+}
+}
+
+setEQ(i, g) {
+this.eqFilters[i].gain.value = g;
+this.settings.eq[i] = g;
+}
+
+toggleLimiter(on) {
+this.limiterEnabled = on;
+this.rebuild();
+}
+
+toggleCompressor(on) {
+this.compressorEnabled = on;
+this.rebuild();
+}
+
+getData() {
+if (!this.analyser) return null;
+const data = new Uint8Array(this.analyser.frequencyBinCount);
+this.analyser.getByteFrequencyData(data);
+return data;
+}
+
+getTimeDomainData(channel) {
+const analyser = channel === 'L' ? this.analyserL : this.analyserR;
+if (!analyser) return null;
+const data = new Float32Array(analyser.fftSize);
+analyser.getFloatTimeDomainData(data);
+return data;
+}
+
+startMetering() {
+const update = () => {
+requestAnimationFrame(update);
+
+const dataL = this.getTimeDomainData('L');
+const dataR = this.getTimeDomainData('R');
+
+if (dataL && dataR) {
+// Calculate peak
+let peakL = 0, peakR = 0;
+let rmsL = 0, rmsR = 0;
+
+for (let i = 0; i < dataL.length; i++) {
+peakL = Math.max(peakL, Math.abs(dataL[i]));
+peakR = Math.max(peakR, Math.abs(dataR[i]));
+rmsL += dataL[i] * dataL[i];
+rmsR += dataR[i] * dataR[i];
+}
+
+rmsL = Math.sqrt(rmsL / dataL.length);
+rmsR = Math.sqrt(rmsR / dataR.length);
+
+const dbL = peakL > 0 ? 20 * Math.log10(peakL) : -Infinity;
+const dbR = peakR > 0 ? 20 * Math.log10(peakR) : -Infinity;
+const rmsDb = ((rmsL + rmsR) / 2) > 0 ? 20 * Math.log10((rmsL + rmsR) / 2) : -Infinity;
+
+this.peakL = dbL;
+this.peakR = dbR;
+
+// Peak hold
+if (dbL > this.peakHoldL) this.peakHoldL = dbL;
+if (dbR > this.peakHoldR) this.peakHoldR = dbR;
+
+// Update UI
+this.updateMeters(dbL, dbR, rmsDb);
+}
+
+// Gain reduction metering
+if (this.limiter) {
+const gr = this.limiter.reduction;
+document.getElementById('limiterGrFill').style.width = Math.min(100, Math.abs(gr) * 5) + '%';
+document.getElementById('limiterGrValue').textContent = gr.toFixed(1) + ' dB';
+}
+
+if (this.compressor && this.compressorEnabled) {
+const gr = this.compressor.reduction;
+document.getElementById('compGrFill').style.width = Math.min(100, Math.abs(gr) * 5) + '%';
+document.getElementById('compGrValue').textContent = gr.toFixed(1) + ' dB';
+}
+};
+update();
+
+// Peak hold decay
+this.peakDecay = setInterval(() => {
+this.peakHoldL -= 0.5;
+this.peakHoldR -= 0.5;
+}, 50);
+}
+
+updateMeters(dbL, dbR, rmsDb) {
+// Convert dB to percentage (range: -60 to 0 dB)
+const pctL = Math.max(0, Math.min(100, ((dbL + 60) / 60) * 100));
+const pctR = Math.max(0, Math.min(100, ((dbR + 60) / 60) * 100));
+
+// Horizontal meters
+document.getElementById('meterFillL').style.width = pctL + '%';
+document.getElementById('meterFillR').style.width = pctR + '%';
+
+// Peak indicators
+const peakPctL = Math.max(0, Math.min(100, ((this.peakHoldL + 60) / 60) * 100));
+const peakPctR = Math.max(0, Math.min(100, ((this.peakHoldR + 60) / 60) * 100));
+document.getElementById('meterPeakL').style.left = peakPctL + '%';
+document.getElementById('meterPeakR').style.left = peakPctR + '%';
+
+// VU Meters (vertical)
+document.getElementById('vuFillL').style.height = pctL + '%';
+document.getElementById('vuFillR').style.height = pctR + '%';
+document.getElementById('vuPeakL').style.bottom = peakPctL + '%';
+document.getElementById('vuPeakR').style.bottom = peakPctR + '%';
+
+// dB Values
+document.getElementById('vuDbL').textContent = isFinite(dbL) ? dbL.toFixed(1) : '-∞';
+document.getElementById('vuDbR').textContent = isFinite(dbR) ? dbR.toFixed(1) : '-∞';
+
+// Peak display
+const peakValL = document.getElementById('peakValueL');
+const peakValR = document.getElementById('peakValueR');
+peakValL.textContent = isFinite(this.peakHoldL) ? this.peakHoldL.toFixed(1) + ' dB' : '-∞ dB';
+peakValR.textContent = isFinite(this.peakHoldR) ? this.peakHoldR.toFixed(1) + ' dB' : '-∞ dB';
+
+// Color coding
+const getClass = (db) => {
+if (db > -3) return 'danger';
+if (db > -10) return 'warning';
+return 'good';
+};
+
+peakValL.className = 'peak-item-value ' + getClass(this.peakHoldL);
+peakValR.className = 'peak-item-value ' + getClass(this.peakHoldR);
+
+// RMS
+document.getElementById('rmsValue').textContent = isFinite(rmsDb) ? rmsDb.toFixed(1) + ' dB' : '-∞ dB';
+
+// LUFS (approximate)
+const lufs = rmsDb - 0.691;
+document.getElementById('lufsValue').textContent = isFinite(lufs) ? lufs.toFixed(1) : '-∞';
+}
+
+resume() {
+if (this.ctx?.state === 'suspended') this.ctx.resume();
+}
+}
+
+// ==================== AUDIO RENDERER ====================
+class AudioRenderer {
+constructor(engine) {
+this.engine = engine;
+this.renderedBuffer = null;
+}
+
+async render(audioBuffer, onProgress) {
+const settings = this.engine.settings;
+const sampleRate = parseInt(document.getElementById('qualitySelect').value);
+const length = Math.ceil(audioBuffer.duration * sampleRate);
+
+onProgress(5, 'Creating offline context...');
+
+const offline = new OfflineAudioContext(2, length, sampleRate);
+
+const source = offline.createBufferSource();
+source.buffer = audioBuffer;
+
+onProgress(10, 'Building effect chain...');
+
+// Gain
+const gain = offline.createGain();
+gain.gain.value = 0.9;
+
+// Master Gain
+const masterGain = offline.createGain();
+masterGain.gain.value = Math.pow(10, settings.masterLevel / 20);
+
+// EQ
+const eqFilters = [];
+const freqs = [32, 64, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
+freqs.forEach((f, i) => {
+const filter = offline.createBiquadFilter();
+filter.type = 'peaking';
+filter.frequency.value = f;
+filter.Q.value = 1;
+filter.gain.value = settings.eq[i];
+eqFilters.push(filter);
+});
+
+onProgress(20, 'Applying bass/treble...');
+
+const bass = offline.createBiquadFilter();
+bass.type = 'lowshelf';
+bass.frequency.value = settings.bassFreq;
+bass.gain.value = settings.bassGain;
+
+const treble = offline.createBiquadFilter();
+treble.type = 'highshelf';
+treble.frequency.value = settings.trebleFreq;
+treble.gain.value = settings.trebleGain;
+
+onProgress(30, 'Setting up reverb...');
+
+let dryGain, wetGain, convolver;
+if (this.engine.reverbEnabled) {
+dryGain = offline.createGain();
+wetGain = offline.createGain();
+convolver = offline.createConvolver();
+
+const reverbLen = Math.ceil(sampleRate * settings.reverbDecay);
+const reverbBuffer = offline.createBuffer(2, reverbLen, sampleRate);
+for (let ch = 0; ch < 2; ch++) {
+const data = reverbBuffer.getChannelData(ch);
+for (let i = 0; i < reverbLen; i++) {
+data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / reverbLen, 2.5);
+}
+}
+convolver.buffer = reverbBuffer;
+dryGain.gain.value = 1 - settings.reverbMix;
+wetGain.gain.value = settings.reverbMix;
+}
+
+onProgress(40, 'Configuring compressor...');
+
+const compressor = offline.createDynamicsCompressor();
+compressor.threshold.value = settings.compThreshold;
+compressor.ratio.value = settings.compRatio;
+compressor.attack.value = settings.compAttack / 1000;
+compressor.release.value = settings.compRelease / 1000;
+
+onProgress(50, 'Configuring limiter...');
+
+const limiter = offline.createDynamicsCompressor();
+limiter.threshold.value = settings.limiterThreshold;
+limiter.ratio.value = 20;
+limiter.attack.value = 0.001;
+limiter.release.value = settings.limiterRelease / 1000;
+limiter.knee.value = 0;
+
+onProgress(60, 'Connecting audio graph...');
+
+const panner = offline.createStereoPanner();
+panner.pan.value = 0;
+
+// Connect chain
+let node = source;
+eqFilters.forEach(f => { node.connect(f); node = f; });
+
+node.connect(bass);
+bass.connect(treble);
+treble.connect(panner);
+
+if (this.engine.reverbEnabled) {
+panner.connect(dryGain);
+panner.connect(convolver);
+convolver.connect(wetGain);
+dryGain.connect(gain);
+wetGain.connect(gain);
+} else {
+panner.connect(gain);
+}
+
+if (this.engine.compressorEnabled) {
+gain.connect(compressor);
+compressor.connect(masterGain);
+} else {
+gain.connect(masterGain);
+}
+
+if (this.engine.limiterEnabled) {
+masterGain.connect(limiter);
+limiter.connect(offline.destination);
+} else {
+masterGain.connect(offline.destination);
+}
+
+onProgress(70, 'Rendering audio...');
+
+source.start(0);
+this.renderedBuffer = await offline.startRendering();
+
+onProgress(100, 'Complete!');
+
+return this.renderedBuffer;
+}
+
+bufferToWav(buffer) {
+const numChannels = buffer.numberOfChannels;
+const sampleRate = buffer.sampleRate;
+const bitDepth = parseInt(document.getElementById('bitDepthSelect').value);
+const bytesPerSample = bitDepth / 8;
+
+const length = buffer.length * numChannels * bytesPerSample;
+const arrayBuffer = new ArrayBuffer(44 + length);
+const view = new DataView(arrayBuffer);
+
+const writeString = (offset, str) => {
+for (let i = 0; i < str.length; i++) {
+view.setUint8(offset + i, str.charCodeAt(i));
+}
+};
+
+writeString(0, 'RIFF');
+view.setUint32(4, 36 + length, true);
+writeString(8, 'WAVE');
+writeString(12, 'fmt ');
+view.setUint32(16, 16, true);
+view.setUint16(20, 1, true);
+view.setUint16(22, numChannels, true);
+view.setUint32(24, sampleRate, true);
+view.setUint32(28, sampleRate * numChannels * bytesPerSample, true);
+view.setUint16(32, numChannels * bytesPerSample, true);
+view.setUint16(34, bitDepth, true);
+writeString(36, 'data');
+view.setUint32(40, length, true);
+
+const channels = [];
+for (let i = 0; i < numChannels; i++) {
+channels.push(buffer.getChannelData(i));
+}
+
+let offset = 44;
+for (let i = 0; i < buffer.length; i++) {
+for (let ch = 0; ch < numChannels; ch++) {
+let sample = channels[ch][i];
+sample = Math.max(-1, Math.min(1, sample));
+
+if (bitDepth === 16) {
+view.setInt16(offset, sample * 0x7FFF, true);
+} else if (bitDepth === 24) {
+const val = sample * 0x7FFFFF;
+view.setUint8(offset, val & 0xFF);
+view.setUint8(offset + 1, (val >> 8) & 0xFF);
+view.setUint8(offset + 2, (val >> 16) & 0xFF);
+} else {
+view.setFloat32(offset, sample, true);
+}
+offset += bytesPerSample;
+}
+}
+
+return new Blob([arrayBuffer], { type: 'audio/wav' });
+}
+
+getFileSize() {
+if (!this.renderedBuffer) return 0;
+const bitDepth = parseInt(document.getElementById('bitDepthSelect').value);
+return this.renderedBuffer.length * this.renderedBuffer.numberOfChannels * (bitDepth / 8) + 44;
+}
+}
+
+// ==================== MUSIC PLAYER ====================
+class MusicPlayer {
+constructor() {
+this.engine = new AudioEngine();
+this.renderer = new AudioRenderer(this.engine);
+this.audio = new Audio();
+this.playlist = [];
+this.currentIndex = -1;
+this.isPlaying = false;
+this.shuffle = false;
+this.repeat = 0;
+this.vizMode = 'bars';
+this.originalBuffer = null;
+
+this.init();
+}
+
+async init() {
+await this.engine.init();
+this.setupNav();
+this.setupControls();
+this.setupFX();
+this.setupMaster();
+this.setupEQ();
+this.setupRender();
+this.initVisualizer();
+}
+
+setupNav() {
+document.querySelectorAll('.nav-link').forEach(link => {
+link.addEventListener('click', () => this.navigate(link.dataset.page));
+});
+
+document.getElementById('mobileMenuBtn').addEventListener('click', () => {
+document.getElementById('sidebar').classList.toggle('open');
+});
+}
+
+navigate(page) {
+document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+document.querySelector(`[data-page="${page}"]`)?.classList.add('active');
+document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+document.getElementById(`page-${page}`)?.classList.add('active');
+document.getElementById('sidebar').classList.remove('open');
+
+if (page === 'render') this.updateRenderPage();
+}
+
+setupControls() {
+document.getElementById('fileInput').addEventListener('change', e => this.addFiles(e));
+
+document.getElementById('playBtn').addEventListener('click', () => this.togglePlay());
+document.getElementById('miniPlayBtn').addEventListener('click', () => this.togglePlay());
+document.getElementById('prevBtn').addEventListener('click', () => this.prev());
+document.getElementById('miniPrevBtn').addEventListener('click', () => this.prev());
+document.getElementById('nextBtn').addEventListener('click', () => this.next());
+document.getElementById('miniNextBtn').addEventListener('click', () => this.next());
+document.getElementById('shuffleBtn').addEventListener('click', () => this.toggleShuffle());
+document.getElementById('repeatBtn').addEventListener('click', () => this.toggleRepeat());
+
+document.getElementById('progressBar').addEventListener('click', e => {
+const rect = e.target.getBoundingClientRect();
+this.audio.currentTime = ((e.clientX - rect.left) / rect.width) * this.audio.duration;
+});
+
+document.getElementById('volumeSlider').addEventListener('input', e => {
+this.engine.setVolume(e.target.value / 100);
+document.getElementById('volumeValue').textContent = e.target.value + '%';
+});
+
+this.audio.addEventListener('timeupdate', () => this.updateProgress());
+this.audio.addEventListener('ended', () => this.handleEnded());
+this.audio.addEventListener('loadedmetadata', () => {
+document.getElementById('duration').textContent = this.formatTime(this.audio.duration);
+});
+this.audio.addEventListener('play', () => this.onPlay());
+this.audio.addEventListener('pause', () => this.onPause());
+
+document.getElementById('clearPlaylistBtn').addEventListener('click', () => this.clearPlaylist());
+
+document.querySelectorAll('.viz-mode-btn').forEach(btn => {
+btn.addEventListener('click', () => {
+document.querySelectorAll('.viz-mode-btn').forEach(b => b.classList.remove('active'));
+btn.classList.add('active');
+this.vizMode = btn.dataset.mode;
+});
+});
+}
+
+setupFX() {
+// Bass
+document.getElementById('bassSlider').addEventListener('input', e => {
+this.engine.setBass(parseFloat(e.target.value), null);
+document.getElementById('bassValue').textContent = e.target.value + ' dB';
+this.updateFXSummary();
+});
+
+document.getElementById('bassFreqSlider').addEventListener('input', e => {
+this.engine.setBass(null, parseFloat(e.target.value));
+document.getElementById('bassFreqValue').textContent = e.target.value + ' Hz';
+});
+
+// Treble
+document.getElementById('trebleSlider').addEventListener('input', e => {
+this.engine.setTreble(parseFloat(e.target.value), null);
+document.getElementById('trebleValue').textContent = e.target.value + ' dB';
+this.updateFXSummary();
+});
+
+document.getElementById('trebleFreqSlider').addEventListener('input', e => {
+this.engine.setTreble(null, parseFloat(e.target.value));
+document.getElementById('trebleFreqValue').textContent = e.target.value + ' Hz';
+});
+
+// Reverb
+document.getElementById('reverbToggle').addEventListener('click', () => {
+const toggle = document.getElementById('reverbToggle');
+toggle.classList.toggle('active');
+const on = toggle.classList.contains('active');
+this.engine.setReverb(on, document.getElementById('reverbSlider').value / 100);
+this.updateFXSummary();
+});
+
+document.getElementById('reverbSlider').addEventListener('input', e => {
+document.getElementById('reverbValue').textContent = e.target.value + '%';
+const on = document.getElementById('reverbToggle').classList.contains('active');
+this.engine.setReverb(on, e.target.value / 100);
+});
+
+document.getElementById('reverbDecaySlider').addEventListener('input', async e => {
+const decay = e.target.value / 10;
+document.getElementById('reverbDecayValue').textContent = decay.toFixed(1) + 's';
+await this.engine.setReverbDecay(decay);
+});
+
+// Surround
+document.getElementById('surroundToggle').addEventListener('click', () => {
+const toggle = document.getElementById('surroundToggle');
+toggle.classList.toggle('active');
+const on = toggle.classList.contains('active');
+this.engine.setSurround(on, document.getElementById('surroundSlider').value, document.getElementById('surroundSpeedSlider').value);
+this.updateFXSummary();
+});
+
+document.getElementById('surroundSlider').addEventListener('input', e => {
+document.getElementById('surroundValue').textContent = e.target.value + '%';
+const on = document.getElementById('surroundToggle').classList.contains('active');
+this.engine.setSurround(on, e.target.value, document.getElementById('surroundSpeedSlider').value);
+});
+
+document.getElementById('surroundSpeedSlider').addEventListener('input', e => {
+document.getElementById('surroundSpeedValue').textContent = e.target.value;
+const on = document.getElementById('surroundToggle').classList.contains('active');
+this.engine.setSurround(on, document.getElementById('surroundSlider').value, e.target.value);
+});
+
+// Presets
+document.querySelectorAll('[data-preset]').forEach(btn => {
+btn.addEventListener('click', () => this.applyPreset(btn.dataset.preset));
+});
+
+document.getElementById('resetFxBtn').addEventListener('click', () => this.resetFX());
+}
+
+setupMaster() {
+// Master Volume
+document.getElementById('masterSlider').addEventListener('input', e => {
+const db = parseFloat(e.target.value);
+this.engine.setMasterLevel(db);
+document.getElementById('masterDbValue').textContent = db.toFixed(1) + ' dB';
+this.updateFXSummary();
+});
+
+// Ceiling
+document.getElementById('ceilingSlider').addEventListener('input', e => {
+const db = parseFloat(e.target.value);
+this.engine.setCeiling(db);
+document.getElementById('ceilingValue').textContent = db.toFixed(1) + ' dB';
+this.updateFXSummary();
+});
+
+// Limiter
+document.getElementById('limiterToggle').addEventListener('click', () => {
+const toggle = document.getElementById('limiterToggle');
+toggle.classList.toggle('active');
+this.engine.toggleLimiter(toggle.classList.contains('active'));
+this.updateFXSummary();
+});
+
+document.getElementById('limiterThresholdSlider').addEventListener('input', e => {
+document.getElementById('limiterThresholdValue').textContent = e.target.value + ' dB';
+this.engine.setLimiter(parseFloat(e.target.value), parseFloat(document.getElementById('limiterReleaseSlider').value));
+});
+
+document.getElementById('limiterReleaseSlider').addEventListener('input', e => {
+document.getElementById('limiterReleaseValue').textContent = e.target.value + ' ms';
+this.engine.setLimiter(parseFloat(document.getElementById('limiterThresholdSlider').value), parseFloat(e.target.value));
+});
+
+// Compressor
+document.getElementById('compressorToggle').addEventListener('click', () => {
+const toggle = document.getElementById('compressorToggle');
+toggle.classList.toggle('active');
+this.engine.toggleCompressor(toggle.classList.contains('active'));
+this.updateFXSummary();
+});
+
+['compThreshold', 'compRatio', 'compAttack', 'compRelease', 'compMakeup'].forEach(id => {
+document.getElementById(id + 'Slider').addEventListener('input', e => {
+const labels = {
+compThreshold: ' dB',
+compRatio: ':1',
+compAttack: ' ms',
+compRelease: ' ms',
+compMakeup: ' dB'
+};
+document.getElementById(id + 'Value').textContent = e.target.value + labels[id];
+
+this.engine.setCompressor(
+parseFloat(document.getElementById('compThresholdSlider').value),
+parseFloat(document.getElementById('compRatioSlider').value),
+parseFloat(document.getElementById('compAttackSlider').value),
+parseFloat(document.getElementById('compReleaseSlider').value),
+parseFloat(document.getElementById('compMakeupSlider').value)
+);
+});
+});
+
+// Target levels
+document.getElementById('targetLufsSlider').addEventListener('input', e => {
+document.getElementById('targetLufsValue').textContent = e.target.value + ' LUFS';
+});
+
+document.getElementById('truePeakSlider').addEventListener('input', e => {
+document.getElementById('truePeakValue').textContent = e.target.value + ' dBTP';
+});
+
+// Normalize button
+document.getElementById('normalizeBtn').addEventListener('click', () => {
+const targetLufs = parseFloat(document.getElementById('targetLufsSlider').value);
+const currentLufs = parseFloat(document.getElementById('lufsValue').textContent);
+
+if (isFinite(currentLufs)) {
+const diff = targetLufs - currentLufs;
+const newMaster = Math.min(12, Math.max(-60, this.engine.settings.masterLevel + diff));
+
+document.getElementById('masterSlider').value = newMaster;
+this.engine.setMasterLevel(newMaster);
+document.getElementById('masterDbValue').textContent = newMaster.toFixed(1) + ' dB';
+
+this.toast('Normalized to ' + targetLufs + ' LUFS');
+} else {
+this.toast('Play audio first to measure levels', true);
+}
+});
+
+// Master presets
+document.querySelectorAll('[data-master-preset]').forEach(btn => {
+btn.addEventListener('click', () => this.applyMasterPreset(btn.dataset.masterPreset));
+});
+
+document.getElementById('resetMasterBtn').addEventListener('click', () => this.resetMaster());
+}
+
+applyMasterPreset(preset) {
+const presets = {
+streaming: { lufs: -14, peak: -1, threshold: -1, limiter: true },
+cd: { lufs: -9, peak: -0.3, threshold: -0.3, limiter: true },
+broadcast: { lufs: -23, peak: -2, threshold: -2, limiter: true },
+podcast: { lufs: -16, peak: -1, threshold: -1, limiter: true }
+};
+
+const p = presets[preset];
+if (p) {
+document.getElementById('targetLufsSlider').value = p.lufs;
+document.getElementById('targetLufsValue').textContent = p.lufs + ' LUFS';
+document.getElementById('truePeakSlider').value = p.peak;
+document.getElementById('truePeakValue').textContent = p.peak + ' dBTP';
+document.getElementById('limiterThresholdSlider').value = p.threshold;
+document.getElementById('limiterThresholdValue').textContent = p.threshold + ' dB';
+
+this.engine.setLimiter(p.threshold, 100);
+
+if (p.limiter && !document.getElementById('limiterToggle').classList.contains('active')) {
+document.getElementById('limiterToggle').click();
+}
+
+document.querySelectorAll('[data-master-preset]').forEach(b => {
+b.classList.toggle('active', b.dataset.masterPreset === preset);
+});
+
+this.toast('Applied ' + preset + ' preset');
+}
+}
+
+resetMaster() {
+document.getElementById('masterSlider').value = 0;
+document.getElementById('masterDbValue').textContent = '0.0 dB';
+document.getElementById('ceilingSlider').value = -0.1;
+document.getElementById('ceilingValue').textContent = '-0.1 dB';
+document.getElementById('limiterThresholdSlider').value = -1;
+document.getElementById('limiterThresholdValue').textContent = '-1.0 dB';
+
+this.engine.setMasterLevel(0);
+this.engine.setCeiling(-0.1);
+this.engine.setLimiter(-1, 100);
+
+this.toast('Master settings reset');
+}
+
+setupEQ() {
+const container = document.getElementById('eqVisualizer');
+const freqs = ['32', '64', '125', '250', '500', '1K', '2K', '4K', '8K', '16K'];
+
+container.innerHTML = freqs.map((f, i) => `
+<div class="eq-band">
+<span class="eq-band-value" id="eqVal${i}">0</span>
+<input type="range" class="eq-band-slider" id="eqSlider${i}"
+min="-12" max="12" value="0" orient="vertical">
+<span class="eq-band-label">${f}</span>
+</div>
+`).join('');
+
+for (let i = 0; i < 10; i++) {
+document.getElementById(`eqSlider${i}`).addEventListener('input', e => {
+this.engine.setEQ(i, parseFloat(e.target.value));
+document.getElementById(`eqVal${i}`).textContent = e.target.value;
+});
+}
+
+document.querySelectorAll('[data-eq]').forEach(btn => {
+btn.addEventListener('click', () => this.applyEQPreset(btn.dataset.eq));
+});
+
+document.getElementById('resetEqBtn').addEventListener('click', () => this.resetEQ());
+}
+
+setupRender() {
+document.querySelectorAll('.format-btn').forEach(btn => {
+btn.addEventListener('click', () => {
+document.querySelectorAll('.format-btn').forEach(b => b.classList.remove('active'));
+btn.classList.add('active');
+});
+});
+
+document.getElementById('renderBtn').addEventListener('click', () => this.startRender());
+document.getElementById('downloadBtn').addEventListener('click', () => this.downloadRendered());
+document.getElementById('finalDownloadBtn').addEventListener('click', () => this.downloadRendered());
+document.getElementById('closeRenderBtn').addEventListener('click', () => {
+document.getElementById('renderOverlay').classList.remove('active');
+});
+}
+
+addFiles(e) {
+Array.from(e.target.files).forEach(file => {
+if (file.type.startsWith('audio/')) {
+this.playlist.push({
+file, name: file.name.replace(/\.[^/.]+$/, ''),
+url: URL.createObjectURL(file), duration: 0
+});
+}
+});
+e.target.value = '';
+this.updatePlaylistUI();
+this.toast(`Added ${e.target.files.length} track(s)`);
+
+if (this.playlist.length === 1) this.play(0);
+}
+
+updatePlaylistUI() {
+const body = document.getElementById('playlistBody');
+const badge = document.getElementById('playlistBadge');
+const count = document.getElementById('playlistCount');
+
+badge.textContent = this.playlist.length;
+count.textContent = this.playlist.length;
+
+if (this.playlist.length === 0) {
+body.innerHTML = `
+<div class="playlist-empty">
+<i class="fas fa-folder-open"></i>
+<h3>Playlist is empty</h3>
+<p style="color:var(--text-secondary);margin:10px 0 20px;">Add music to get started</p>
+<label for="fileInput" class="btn btn-primary"><i class="fas fa-plus"></i> Add Music</label>
+</div>`;
+return;
+}
+
+body.innerHTML = this.playlist.map((t, i) => `
+<div class="playlist-row ${i === this.currentIndex ? 'active' : ''}" data-index="${i}">
+<span style="color:var(--text-secondary)">${i + 1}</span>
+<div class="row-track">
+<div class="row-track-art"><i class="fas fa-music"></i></div>
+<div class="row-track-info">
+<h4>${t.name}</h4>
+<span>Unknown Artist</span>
+</div>
+</div>
+<span style="color:${i === this.currentIndex ? 'var(--success)' : 'var(--text-secondary)'}">
+${i === this.currentIndex ? '<i class="fas fa-play"></i> Playing' : 'Ready'}
+</span>
+<span style="color:var(--text-secondary)">${this.formatTime(t.duration) || '--:--'}</span>
+<div class="row-actions">
+<button class="row-action-btn" data-export="${i}"><i class="fas fa-download"></i></button>
+<button class="row-action-btn danger" data-remove="${i}"><i class="fas fa-trash"></i></button>
+</div>
+</div>
+`).join('');
+
+body.querySelectorAll('.playlist-row').forEach(row => {
+row.addEventListener('click', e => {
+if (!e.target.closest('.row-action-btn')) {
+this.play(parseInt(row.dataset.index));
+}
+});
+});
+
+body.querySelectorAll('[data-remove]').forEach(btn => {
+btn.addEventListener('click', e => {
+e.stopPropagation();
+this.removeTrack(parseInt(btn.dataset.remove));
+});
+});
+
+body.querySelectorAll('[data-export]').forEach(btn => {
+btn.addEventListener('click', e => {
+e.stopPropagation();
+this.play(parseInt(btn.dataset.export));
+this.navigate('render');
+});
+});
+}
+
+removeTrack(i) {
+const wasPlaying = i === this.currentIndex;
+this.playlist.splice(i, 1);
+
+if (wasPlaying) {
+if (this.playlist.length > 0) {
+this.play(Math.min(i, this.playlist.length - 1));
+} else {
+this.audio.pause();
+this.audio.src = '';
+this.currentIndex = -1;
+this.updateNowPlaying();
+}
+} else if (i < this.currentIndex) {
+this.currentIndex--;
+}
+
+this.updatePlaylistUI();
+}
+
+clearPlaylist() {
+this.audio.pause();
+this.audio.src = '';
+this.playlist = [];
+this.currentIndex = -1;
+this.updatePlaylistUI();
+this.updateNowPlaying();
+this.toast('Playlist cleared');
+}
+
+async play(i) {
+if (i < 0 || i >= this.playlist.length) return;
+
+this.currentIndex = i;
+const track = this.playlist[i];
+
+this.engine.resume();
+this.audio.src = track.url;
+
+if (!this.engine.source) {
+this.engine.connect(this.audio);
+}
+
+await this.loadOriginalBuffer(track.file);
+await this.audio.play();
+this.updateNowPlaying();
+this.updatePlaylistUI();
+this.updateRenderPage();
+}
+
+async loadOriginalBuffer(file) {
+const arrayBuffer = await file.arrayBuffer();
+this.originalBuffer = await this.engine.ctx.decodeAudioData(arrayBuffer);
+}
+
+togglePlay() {
+this.engine.resume();
+if (this.playlist.length === 0) return;
+
+if (this.isPlaying) {
+this.audio.pause();
+} else {
+if (this.currentIndex === -1) this.play(0);
+else this.audio.play();
+}
+}
+
+prev() {
+if (this.playlist.length === 0) return;
+if (this.audio.currentTime > 3) this.audio.currentTime = 0;
+else this.play((this.currentIndex - 1 + this.playlist.length) % this.playlist.length);
+}
+
+next() {
+if (this.playlist.length === 0) return;
+let next = this.shuffle
+? Math.floor(Math.random() * this.playlist.length)
+: (this.currentIndex + 1) % this.playlist.length;
+this.play(next);
+}
+
+handleEnded() {
+if (this.repeat === 2) {
+this.audio.currentTime = 0;
+this.audio.play();
+} else if (this.repeat === 1 || this.currentIndex < this.playlist.length - 1) {
+this.next();
+}
+}
+
+toggleShuffle() {
+this.shuffle = !this.shuffle;
+document.getElementById('shuffleBtn').classList.toggle('active', this.shuffle);
+}
+
+toggleRepeat() {
+this.repeat = (this.repeat + 1) % 3;
+document.getElementById('repeatBtn').classList.toggle('active', this.repeat > 0);
+}
+
+updateProgress() {
+const pct = this.audio.duration ? (this.audio.currentTime / this.audio.duration) * 100 : 0;
+document.getElementById('progressFill').style.width = pct + '%';
+document.getElementById('miniProgressFill').style.width = pct + '%';
+document.getElementById('currentTime').textContent = this.formatTime(this.audio.currentTime);
+
+if (this.currentIndex >= 0) {
+this.playlist[this.currentIndex].duration = this.audio.duration;
+}
+}
+
+onPlay() {
+this.isPlaying = true;
+document.getElementById('playBtn').innerHTML = '<i class="fas fa-pause"></i>';
+document.getElementById('miniPlayBtn').innerHTML = '<i class="fas fa-pause"></i>';
+document.getElementById('albumArt').classList.add('playing');
+}
+
+onPause() {
+this.isPlaying = false;
+document.getElementById('playBtn').innerHTML = '<i class="fas fa-play"></i>';
+document.getElementById('miniPlayBtn').innerHTML = '<i class="fas fa-play"></i>';
+document.getElementById('albumArt').classList.remove('playing');
+}
+
+updateNowPlaying() {
+const track = this.playlist[this.currentIndex];
+const title = track?.name || 'No Track Selected';
+const artist = track ? 'Unknown Artist' : 'Select a song';
+
+document.getElementById('trackTitle').textContent = title;
+document.getElementById('trackArtist').textContent = artist;
+document.getElementById('miniTrackTitle').textContent = title;
+document.getElementById('miniTrackArtist').textContent = artist;
+}
+
+applyPreset(preset) {
+const presets = {
+flat: { bass: 0, treble: 0 },
+rock: { bass: 5, treble: 4 },
+pop: { bass: 2, treble: 3 },
+jazz: { bass: 4, treble: -2 },
+classical: { bass: -2, treble: 3 },
+'bass-boost': { bass: 10, treble: -2 },
+vocal: { bass: -3, treble: 5 },
+electronic: { bass: 8, treble: 6 }
+};
+
+const p = presets[preset];
+if (p) {
+document.getElementById('bassSlider').value = p.bass;
+document.getElementById('trebleSlider').value = p.treble;
+this.engine.setBass(p.bass, null);
+this.engine.setTreble(p.treble, null);
+document.getElementById('bassValue').textContent = p.bass + ' dB';
+document.getElementById('trebleValue').textContent = p.treble + ' dB';
+
+document.querySelectorAll('[data-preset]').forEach(btn => {
+btn.classList.toggle('active', btn.dataset.preset === preset);
+});
+
+this.updateFXSummary();
+this.toast('Applied ' + preset + ' preset');
+}
+}
+
+applyEQPreset(preset) {
+const presets = {
+flat: [0,0,0,0,0,0,0,0,0,0],
+bass: [8,6,4,2,0,0,0,0,0,0],
+treble: [0,0,0,0,0,2,4,6,8,8],
+'v-shape': [6,4,2,0,-2,-2,0,2,4,6],
+acoustic: [3,2,0,1,2,2,3,3,2,1]
+};
+
+const vals = presets[preset];
+if (vals) {
+vals.forEach((v, i) => {
+this.engine.setEQ(i, v);
+document.getElementById(`eqSlider${i}`).value = v;
+document.getElementById(`eqVal${i}`).textContent = v;
+});
+
+document.querySelectorAll('[data-eq]').forEach(btn => {
+btn.classList.toggle('active', btn.dataset.eq === preset);
+});
+
+this.toast('Applied ' + preset + ' EQ');
+}
+}
+
+resetFX() {
+document.getElementById('bassSlider').value = 0;
+document.getElementById('trebleSlider').value = 0;
+document.getElementById('reverbSlider').value = 30;
+document.getElementById('surroundSlider').value = 50;
+
+this.engine.setBass(0, 200);
+this.engine.setTreble(0, 3000);
+this.engine.setReverb(false, 0.3);
+this.engine.setSurround(false, 50, 5);
+
+document.getElementById('reverbToggle').classList.remove('active');
+document.getElementById('surroundToggle').classList.remove('active');
+document.getElementById('bassValue').textContent = '0 dB';
+document.getElementById('trebleValue').textContent = '0 dB';
+
+document.querySelectorAll('[data-preset]').forEach(btn => btn.classList.remove('active'));
+this.updateFXSummary();
+this.toast('Effects reset');
+}
+
+resetEQ() {
+for (let i = 0; i < 10; i++) {
+this.engine.setEQ(i, 0);
+document.getElementById(`eqSlider${i}`).value = 0;
+document.getElementById(`eqVal${i}`).textContent = '0';
+}
+document.querySelectorAll('[data-eq]').forEach(btn => {
+btn.classList.toggle('active', btn.dataset.eq === 'flat');
+});
+this.toast('Equalizer reset');
+}
+
+updateFXSummary() {
+const s = this.engine.settings;
+
+document.getElementById('bassSummary').textContent = s.bassGain + ' dB';
+document.getElementById('trebleSummary').textContent = s.trebleGain + ' dB';
+document.getElementById('reverbSummary').textContent = Math.round(s.reverbMix * 100) + '% Mix';
+document.getElementById('surroundSummary').textContent = s.surroundIntensity + '% Intensity';
+document.getElementById('masterSummary').textContent = s.masterLevel.toFixed(1) + ' dB, ' + s.ceiling.toFixed(1) + ' dB Ceiling';
+
+const bassOn = document.getElementById('bassToggle').classList.contains('active');
+const trebleOn = document.getElementById('trebleToggle').classList.contains('active');
+const reverbOn = this.engine.reverbEnabled;
+const surroundOn = this.engine.surroundEnabled;
+const limiterOn = this.engine.limiterEnabled;
+
+document.getElementById('bassStatus').textContent = bassOn ? 'ON' : 'OFF';
+document.getElementById('bassStatus').className = `fx-status ${bassOn ? 'on' : 'off'}`;
+
+document.getElementById('trebleStatus').textContent = trebleOn ? 'ON' : 'OFF';
+document.getElementById('trebleStatus').className = `fx-status ${trebleOn ? 'on' : 'off'}`;
+
+document.getElementById('reverbStatus').textContent = reverbOn ? 'ON' : 'OFF';
+document.getElementById('reverbStatus').className = `fx-status ${reverbOn ? 'on' : 'off'}`;
+
+document.getElementById('surroundStatus').textContent = surroundOn ? 'ON' : 'OFF';
+document.getElementById('surroundStatus').className = `fx-status ${surroundOn ? 'on' : 'off'}`;
+
+document.getElementById('masterStatus').textContent = limiterOn ? 'ON' : 'OFF';
+document.getElementById('masterStatus').className = `fx-status ${limiterOn ? 'on' : 'off'}`;
+
+let count = 0;
+if (bassOn) count++;
+if (trebleOn) count++;
+if (reverbOn) count++;
+if (surroundOn) count++;
+if (limiterOn) count++;
+
+document.getElementById('activeFxCount').textContent = count + ' Active';
+}
+
+updateRenderPage() {
+const track = this.playlist[this.currentIndex];
+const hasTrack = !!track;
+
+document.getElementById('renderTrackName').textContent = track?.name || 'No track selected';
+document.getElementById('renderTrackDuration').textContent = track
+? `Duration: ${this.formatTime(track.duration || this.audio.duration)} | ${this.formatFileSize(track.file?.size || 0)}`
+: 'Select a track from playlist';
+
+document.getElementById('renderBtn').disabled = !hasTrack;
+document.getElementById('downloadBtn').disabled = true;
+
+this.updateFXSummary();
+this.drawRenderWaveform();
+}
+
+drawRenderWaveform() {
+const canvas = document.getElementById('renderWaveformCanvas');
+const ctx = canvas.getContext('2d');
+
+canvas.width = canvas.offsetWidth * 2;
+canvas.height = canvas.offsetHeight * 2;
+ctx.scale(2, 2);
+
+const w = canvas.offsetWidth;
+const h = canvas.offsetHeight;
+
+ctx.fillStyle = 'rgba(0,0,0,0.3)';
+ctx.fillRect(0, 0, w, h);
+
+if (!this.originalBuffer) {
+ctx.fillStyle = 'var(--text-secondary)';
+ctx.font = '14px sans-serif';
+ctx.textAlign = 'center';
+ctx.fillText('No audio loaded', w/2, h/2);
+return;
+}
+
+const data = this.originalBuffer.getChannelData(0);
+const step = Math.ceil(data.length / w);
+
+const gradient = ctx.createLinearGradient(0, 0, w, 0);
+gradient.addColorStop(0, '#6366f1');
+gradient.addColorStop(0.5, '#ec4899');
+gradient.addColorStop(1, '#6366f1');
+
+ctx.fillStyle = gradient;
+
+for (let i = 0; i < w; i++) {
+let min = 1.0, max = -1.0;
+for (let j = 0; j < step; j++) {
+const val = data[(i * step) + j] || 0;
+if (val < min) min = val;
+if (val > max) max = val;
+}
+
+const y1 = ((1 + min) / 2) * h;
+const y2 = ((1 + max) / 2) * h;
+
+ctx.fillRect(i, y1, 1, Math.max(1, y2 - y1));
+}
+}
+
+async startRender() {
+if (!this.originalBuffer) {
+this.toast('No audio loaded', true);
+return;
+}
+
+const overlay = document.getElementById('renderOverlay');
+const icon = document.getElementById('renderIcon');
+const title = document.getElementById('renderModalTitle');
+const text = document.getElementById('renderModalText');
+const pctEl = document.getElementById('renderPercentage');
+const fill = document.getElementById('renderProgressFill');
+const complete = document.getElementById('renderCompleteActions');
+
+overlay.classList.add('active');
+icon.innerHTML = '<i class="fas fa-cogs"></i>';
+icon.classList.remove('complete');
+title.textContent = 'Rendering Audio';
+text.textContent = 'Applying all effects including Master Output...';
+pctEl.textContent = '0%';
+fill.style.width = '0%';
+complete.classList.remove('show');
+
+try {
+await this.renderer.render(this.originalBuffer, (pct, msg) => {
+pctEl.textContent = pct + '%';
+fill.style.width = pct + '%';
+text.textContent = msg;
+});
+
+icon.innerHTML = '<i class="fas fa-check"></i>';
+icon.classList.add('complete');
+title.textContent = 'Render Complete!';
+text.textContent = 'Your audio has been processed with all effects';
+
+const track = this.playlist[this.currentIndex];
+const filename = (track?.name || 'audio') + '_mastered.wav';
+const size = this.renderer.getFileSize();
+
+document.getElementById('downloadFileName').textContent = filename;
+document.getElementById('downloadFileSize').textContent = this.formatFileSize(size);
+document.getElementById('downloadBtn').disabled = false;
+
+complete.classList.add('show');
+
+} catch (err) {
+icon.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+icon.style.background = 'var(--danger)';
+title.textContent = 'Render Failed';
+text.textContent = err.message;
+}
+}
+
+downloadRendered() {
+if (!this.renderer.renderedBuffer) {
+this.toast('No rendered audio', true);
+return;
+}
+
+const blob = this.renderer.bufferToWav(this.renderer.renderedBuffer);
+const track = this.playlist[this.currentIndex];
+const filename = (track?.name || 'audio') + '_mastered.wav';
+
+const url = URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.href = url;
+a.download = filename;
+document.body.appendChild(a);
+a.click();
+document.body.removeChild(a);
+URL.revokeObjectURL(url);
+
+this.toast('Download started: ' + filename);
+}
+
+initVisualizer() {
+const canvas = document.getElementById('visualizerCanvas');
+const ctx = canvas.getContext('2d');
+
+const resize = () => {
+canvas.width = canvas.offsetWidth * 2;
+canvas.height = canvas.offsetHeight * 2;
+ctx.scale(2, 2);
+};
+resize();
+window.addEventListener('resize', resize);
+
+const draw = () => {
+requestAnimationFrame(draw);
+
+const w = canvas.offsetWidth;
+const h = canvas.offsetHeight;
+
+ctx.fillStyle = 'rgba(0,0,0,0.3)';
+ctx.fillRect(0, 0, w, h);
+
+const data = this.engine.getData();
+if (!data) return;
+
+if (this.vizMode === 'bars') this.drawBars(ctx, data, w, h);
+else if (this.vizMode === 'wave') this.drawWave(ctx, data, w, h);
+else this.drawCircle(ctx, data, w, h);
+};
+draw();
+}
+
+drawBars(ctx, data, w, h) {
+const barW = w / data.length * 2.5;
+for (let i = 0; i < data.length; i++) {
+const barH = (data[i] / 255) * h * 0.9;
+const x = i * (barW + 2);
+
+const grad = ctx.createLinearGradient(x, h - barH, x, h);
+grad.addColorStop(0, '#ec4899');
+grad.addColorStop(0.5, '#6366f1');
+grad.addColorStop(1, '#3b82f6');
+
+ctx.fillStyle = grad;
+ctx.beginPath();
+ctx.roundRect(x, h - barH, barW, barH, 3);
+ctx.fill();
+}
+}
+
+drawWave(ctx, data, w, h) {
+ctx.beginPath();
+ctx.moveTo(0, h / 2);
+
+for (let i = 0; i < data.length; i++) {
+const x = (i / data.length) * w;
+const y = (1 - data[i] / 255) * h;
+ctx.lineTo(x, y);
+}
+
+const grad = ctx.createLinearGradient(0, 0, w, 0);
+grad.addColorStop(0, '#6366f1');
+grad.addColorStop(0.5, '#ec4899');
+grad.addColorStop(1, '#6366f1');
+ctx.strokeStyle = grad;
+ctx.lineWidth = 3;
+ctx.stroke();
+}
+
+drawCircle(ctx, data, w, h) {
+const cx = w / 2, cy = h / 2, r = Math.min(w, h) / 3;
+
+for (let i = 0; i < data.length; i++) {
+const angle = (i / data.length) * Math.PI * 2;
+const val = data[i] / 255;
+const r2 = r + val * 50;
+
+ctx.beginPath();
+ctx.moveTo(cx + Math.cos(angle) * r, cy + Math.sin(angle) * r);
+ctx.lineTo(cx + Math.cos(angle) * r2, cy + Math.sin(angle) * r2);
+ctx.strokeStyle = `hsl(${(i / data.length) * 360}, 80%, 60%)`;
+ctx.lineWidth = 2;
+ctx.stroke();
+}
+}
+
+formatTime(s) {
+if (!s || isNaN(s)) return '0:00';
+const m = Math.floor(s / 60);
+const sec = Math.floor(s % 60);
+return `${m}:${sec.toString().padStart(2, '0')}`;
+}
+
+formatFileSize(bytes) {
+if (!bytes || bytes === 0) return '0 B';
+if (bytes < 1024) return bytes + ' B';
+if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+}
+
+toast(msg, error = false) {
+const toast = document.getElementById('toast');
+toast.classList.toggle('error', error);
+toast.querySelector('i').className = error ? 'fas fa-exclamation-circle' : 'fas fa-check-circle';
+document.getElementById('toastMessage').textContent = msg;
+toast.classList.add('show');
+setTimeout(() => toast.classList.remove('show'), 3000);
+}
+}
+
+// Initialize Player
+const player = new MusicPlayer();
+
+// Polyfill for roundRect
+if (!CanvasRenderingContext2D.prototype.roundRect) {
+CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+if (w < 2 * r) r = w / 2;
+if (h < 2 * r) r = h / 2;
+this.beginPath();
+this.moveTo(x + r, y);
+this.arcTo(x + w, y, x + w, y + h, r);
+this.arcTo(x + w, y + h, x, y + h, r);
+this.arcTo(x, y + h, x, y, r);
+this.arcTo(x, y, x + w, y, r);
+this.closePath();
+return this;
+};
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+
+switch(e.code) {
+case 'Space':
+e.preventDefault();
+player.togglePlay();
+break;
+case 'ArrowLeft':
+player.audio.currentTime = Math.max(0, player.audio.currentTime - 5);
+break;
+case 'ArrowRight':
+player.audio.currentTime = Math.min(player.audio.duration, player.audio.currentTime + 5);
+break;
+case 'ArrowUp':
+e.preventDefault();
+const vol = Math.min(100, parseInt(document.getElementById('volumeSlider').value) + 5);
+document.getElementById('volumeSlider').value = vol;
+player.engine.setVolume(vol / 100);
+document.getElementById('volumeValue').textContent = vol + '%';
+break;
+case 'ArrowDown':
+e.preventDefault();
+const vol2 = Math.max(0, parseInt(document.getElementById('volumeSlider').value) - 5);
+document.getElementById('volumeSlider').value = vol2;
+player.engine.setVolume(vol2 / 100);
+document.getElementById('volumeValue').textContent = vol2 + '%';
+break;
+case 'KeyM':
+const volSlider = document.getElementById('volumeSlider');
+if (parseInt(volSlider.value) > 0) {
+volSlider.dataset.prevVol = volSlider.value;
+volSlider.value = 0;
+player.engine.setVolume(0);
+document.getElementById('volumeValue').textContent = '0%';
+} else {
+volSlider.value = volSlider.dataset.prevVol || 80;
+player.engine.setVolume(volSlider.value / 100);
+document.getElementById('volumeValue').textContent = volSlider.value + '%';
+}
+break;
+}
+});
+</script>
+</body>
+</html>
