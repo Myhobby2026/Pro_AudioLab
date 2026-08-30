@@ -1,0 +1,25 @@
+{
+  "name": "pro-audiolab",
+  "productName": "Pro AudioLab",
+  "version": "1.0.0",
+  "description": "Pro AudioLab - professional audio workstation. Electron UI + native C++ DSP engine.",
+  "author": "Pro AudioLab",
+  "license": "MIT",
+  "main": "src/main/main.js",
+  "scripts": {
+    "build:native": "node-gyp rebuild --directory=native",
+    "build:native:debug": "node-gyp rebuild --directory=native --debug",
+    "clean:native": "node-gyp clean --directory=native",
+    "test:engine": "node scripts/test-engine.js",
+    "start": "electron .",
+    "dist": "npm run build:native && electron-builder --win",
+    "dist:portable": "npm run build:native && electron-builder --win portable",
+    "setup": "npm install && npm run build:native && npm run test:engine"
+  },
+  "devDependencies": {
+    "electron": "^44.0.0",
+    "electron-builder": "^26.0.0",
+    "node-addon-api": "^8.0.0",
+    "node-gyp": "^13.0.0"
+  }
+}

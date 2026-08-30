@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Native build output (rebuilt with `npm run build:native`)
+native/build/
+
+# Packaging output
+release/
+dist/
+out/
+
+# Logs / OS junk
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db

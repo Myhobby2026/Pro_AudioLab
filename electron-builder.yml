@@ -1,0 +1,38 @@
+appId: com.proaudiolab.app
+productName: Pro AudioLab
+copyright: Copyright (c) 2026 Pro AudioLab
+
+directories:
+  output: release
+  buildResources: build
+
+# The native addon is prebuilt into native/build/Release by `npm run build:native`.
+# It is an N-API module, so the same binary loads in Electron without a rebuild.
+files:
+  - src/**/*
+  - native/index.js
+  - native/build/Release/*.node
+  - package.json
+  - "!**/*.md"
+
+asar: true
+asarUnpack:
+  - "native/build/Release/*.node"
+
+win:
+  target:
+    - nsis
+    - portable
+  icon: build/icon.png
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Pro AudioLab
+  artifactName: Pro-AudioLab-Setup-${version}.${ext}
+
+portable:
+  artifactName: Pro-AudioLab-Portable-${version}.${ext}
