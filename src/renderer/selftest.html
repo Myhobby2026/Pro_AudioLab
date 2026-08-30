@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:" />
+<title>Pro AudioLab — Engine Self-Test</title>
+<style>
+  :root {
+    --bg: #0b0e14;
+    --panel: #12161f;
+    --panel-2: #171c27;
+    --line: #232a38;
+    --text: #dfe6f3;
+    --muted: #8a94a8;
+    --accent: #22d3ee;
+    --accent-2: #a78bfa;
+    --ok: #34d399;
+    --warn: #fbbf24;
+    --err: #f87171;
+    --mono: ui-monospace, "Cascadia Mono", "JetBrains Mono", Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1200px 500px at 20% -10%, rgba(34, 211, 238, 0.07), transparent 60%),
+      radial-gradient(900px 420px at 90% 0%, rgba(167, 139, 250, 0.06), transparent 55%),
+      var(--bg);
+    color: var(--text);
+    font: 14px/1.55 "Segoe UI", system-ui, -apple-system, sans-serif;
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 22px;
+    border-bottom: 1px solid var(--line);
+    background: rgba(11, 14, 20, 0.85);
+  }
+  .logo {
+    width: 36px; height: 36px; border-radius: 9px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    display: grid; place-items: center;
+    font-weight: 800; font-size: 15px; color: #071018;
+    letter-spacing: -1px;
+  }
+  h1 { font-size: 17px; margin: 0; font-weight: 650; letter-spacing: 0.2px; }
+  h1 small { color: var(--muted); font-weight: 400; margin-left: 8px; }
+  .badges { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+  .badge {
+    font: 11px/1 var(--mono);
+    padding: 6px 10px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--panel);
+    color: var(--muted);
+  }
+  .badge b { color: var(--text); font-weight: 600; }
+  .badge.ok { border-color: rgba(52, 211, 153, 0.4); color: var(--ok); }
+  .badge.err { border-color: rgba(248, 113, 113, 0.5); color: var(--err); }
+
+  main { flex: 1; overflow: auto; padding: 22px; display: flex; flex-direction: column; gap: 18px; }
+  .grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 18px; }
+  @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } }
+  .card {
+    background: linear-gradient(180deg, var(--panel-2), var(--panel));
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 18px 20px;
+  }
+  .card h2 { margin: 0 0 6px; font-size: 15px; }
+  .card p.sub { margin: 0 0 14px; color: var(--muted); font-size: 13px; }
+  button.primary {
+    appearance: none; cursor: pointer;
+    border: 0; border-radius: 10px;
+    padding: 11px 18px;
+    font: 600 13.5px "Segoe UI", system-ui, sans-serif;
+    color: #071018;
+    background: linear-gradient(135deg, var(--accent), #67e8f9);
+  }
+  button.primary:disabled { opacity: 0.5; cursor: default; }
+  button.ghost {
+    appearance: none; cursor: pointer;
+    border: 1px solid var(--line); border-radius: 10px;
+    padding: 11px 18px; background: transparent;
+    font: 600 13.5px "Segoe UI", system-ui, sans-serif;
+    color: var(--text);
+  }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+  #wave-wrap { border: 1px solid var(--line); border-radius: 10px; background: #0a0d13; margin-top: 14px; }
+  #wave { display: block; width: 100%; height: 190px; }
+
+  #console {
+    font: 12px/1.7 var(--mono);
+    background: #0a0d13;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 14px;
+    height: 260px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  #console .t { color: var(--muted); }
+  #console .ok { color: var(--ok); }
+  #console .err { color: var(--err); }
+  #console .hl { color: var(--accent); }
+
+  table.stats { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.stats td { padding: 7px 4px; border-bottom: 1px solid var(--line); }
+  table.stats td:last-child { text-align: right; font-family: var(--mono); color: var(--text); }
+  table.stats td:first-child { color: var(--muted); }
+
+  .notice {
+    border: 1px dashed rgba(167, 139, 250, 0.45);
+    background: rgba(167, 139, 250, 0.06);
+    color: #cfc5f5;
+    border-radius: 12px;
+    padding: 14px 18px;
+    font-size: 13.5px;
+  }
+  .notice b { color: #e6ddff; }
+  code.k { font-family: var(--mono); background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 6px; font-size: 12px; }
+  footer { padding: 10px 22px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; display: flex; gap: 18px; }
+  a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+  <header>
+    <div class="logo">PA</div>
+    <h1>Pro AudioLab <small>Electron + native C++ engine</small></h1>
+    <div class="badges">
+      <span class="badge" id="badge-engine" title="Native addon status">engine: <b>checking…</b></span>
+      <span class="badge" id="badge-app">app: <b>…</b></span>
+    </div>
+  </header>
+
+  <main>
+    <div class="notice" id="integration-note">
+      <b>UI integration pending.</b>
+      The native C++ audio engine is fully wired and tested below.
+      The original <b>Pro-Audio.html</b> interface will be mounted in this window
+      (same APIs: <code class="k">window.proaudio.engine.*</code> for all DSP,
+      <code class="k">window.proaudio.dialog.*</code> for file open/save).
+    </div>
+
+    <div class="grid">
+      <section class="card">
+        <h2>Engine self-test &amp; demo</h2>
+        <p class="sub">
+          Runs a full pipeline inside the C++ engine: tone → high-pass EQ → reverb →
+          16-bit WAV export → reload → analysis → waveform render.
+        </p>
+        <div class="row">
+          <button class="primary" id="btn-test">Run C++ engine self-test</button>
+          <button class="ghost" id="btn-play" disabled>▶ Play result</button>
+          <button class="ghost" id="btn-save" disabled>Export WAV…</button>
+        </div>
+        <div id="wave-wrap"><canvas id="wave"></canvas></div>
+      </section>
+
+      <section class="card">
+        <h2>Analysis</h2>
+        <p class="sub">Produced by the native engine from the last self-test.</p>
+        <table class="stats" id="stats">
+          <tr><td>Engine</td><td>—</td></tr>
+          <tr><td>Live buffers</td><td>—</td></tr>
+          <tr><td>Duration</td><td>—</td></tr>
+          <tr><td>Sample rate</td><td>—</td></tr>
+          <tr><td>Channels</td><td>—</td></tr>
+          <tr><td>Peak</td><td>—</td></tr>
+          <tr><td>RMS</td><td>—</td></tr>
+        </table>
+      </section>
+    </div>
+
+    <section class="card">
+      <h2>Console</h2>
+      <p class="sub">Every step below executes in compiled C++ (native addon), not JavaScript.</p>
+      <div id="console"><span class="t">ready.</span></div>
+    </section>
+  </main>
+
+  <footer>
+    <span>Pro AudioLab 1.0.0</span>
+    <span id="foot-env"></span>
+    <span style="margin-left:auto">C++ engine: N-API addon (audio_engine.node)</span>
+  </footer>
+
+<script>
+'use strict';
+const $ = (id) => document.getElementById(id);
+const logEl = $('console');
+function log(msg, cls) {
+  const line = document.createElement('div');
+  if (cls) line.className = cls;
+  const t = new Date().toLocaleTimeString([], { hour12: false });
+  line.innerHTML = `<span class="t">[${t}]</span> ` + msg;
+  logEl.appendChild(line);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+const fmtDb = (db) => (db === -Infinity ? '-∞ dB' : db.toFixed(2) + ' dB');
+const fmtBytes = (n) => (n > 1048576 ? (n / 1048576).toFixed(2) + ' MB' : (n / 1024).toFixed(1) + ' KB');
+
+let lastHandle = null;
+let lastPCM = null;
+let audioCtx = null;
+
+// ---- boot: engine + app info ------------------------------------------------
+(async function boot() {
+  const engine = window.proaudio ? window.proaudio.engine : null;
+  const badge = $('badge-engine');
+  if (!window.proaudio) {
+    badge.className = 'badge err';
+    badge.innerHTML = 'engine: <b>preload missing</b>';
+    return;
+  }
+  try {
+    const v = engine.version();
+    badge.className = 'badge ok';
+    badge.innerHTML = `engine: <b>${v}</b>`;
+  } catch (err) {
+    badge.className = 'badge err';
+    badge.innerHTML = 'engine: <b>not built</b>';
+    log('<span class="err">Native engine failed to load:</span> ' + err.message, 'err');
+    log('Build it with <span class="hl">npm run build:native</span> (needs VS Build Tools + Python on Windows).', 'err');
+  }
+  const info = await window.proaudio.app.info();
+  $('badge-app').innerHTML = `v<b>${info.version}</b> · Electron <b>${info.electron}</b> · Node <b>${info.node}</b>`;
+  $('foot-env').textContent = info.platform;
+  window.proaudio.app.onMenuAction(({ action }) => {
+    if (action === 'open-file') runPipeline();
+    if (action === 'save-file') exportLast();
+  });
+})();
+
+// ---- waveform rendering (uses engine.getPeaks) -------------------------------
+function drawWave(handle) {
+  const canvas = $('wave');
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth || 800, h = canvas.clientHeight || 190;
+  canvas.width = w * dpr; canvas.height = h * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
+
+  const info = window.proaudio.engine.info(handle);
+  const lanes = Math.min(info.channels, 2);
+  const laneH = h / lanes;
+  const grad = ctx.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, '#22d3ee');
+  grad.addColorStop(1, '#a78bfa');
+
+  for (let c = 0; c < lanes; c++) {
+    const peaks = window.proaudio.engine.getPeaks(handle, Math.floor(w), c);
+    const mid = c * laneH + laneH / 2;
+    const amp = laneH / 2 - 6;
+    ctx.strokeStyle = 'rgba(34, 211, 238, 0.18)';
+    ctx.beginPath(); ctx.moveTo(0, mid); ctx.lineTo(w, mid); ctx.stroke();
+    ctx.fillStyle = grad;
+    for (let x = 0; x < peaks.length / 2; x++) {
+      const lo = peaks[x * 2], hi = peaks[x * 2 + 1];
+      const y1 = mid - Math.max(hi, 0.001) * amp;
+      const y2 = mid - Math.min(lo, -0.001) * amp;
+      ctx.fillRect(x, y1, 1, Math.max(y2 - y1, 0.8));
+    }
+  }
+}
+
+// ---- the pipeline -------------------------------------------------------------
+async function runPipeline() {
+  const e = window.proaudio.engine;
+  const btn = $('btn-test');
+  btn.disabled = true;
+  logEl.innerHTML = '';
+  const handles = [];
+  try {
+    log('<span class="hl">1. generateTone</span> — 440 Hz sine, 2.0 s, stereo, 0.5 amp (C++)');
+    const tone = e.generateTone({ wave: 'sine', freqHz: 440, durationSec: 2, sampleRate: 44100, channels: 2, amplitude: 0.5 });
+    handles.push(tone);
+
+    log('<span class="hl">2. biquad</span> — high-pass @ 150 Hz, Q 0.71 (RBJ cookbook, C++)');
+    const eq = e.biquad(tone, { type: 'highpass', freqHz: 150, q: 0.7071 });
+    handles.push(eq);
+
+    log('<span class="hl">3. reverb</span> — Freeverb-style, room 0.8, wet 0.35, 1.2 s tail (C++)');
+    const rev = e.reverb(eq, { roomSize: 0.8, damping: 0.4, wetLevel: 0.35, dryLevel: 0.65, tailSec: 1.2 });
+    handles.push(rev);
+
+    log('<span class="hl">4. normalize</span> — target peak −0.5 dBFS (C++)');
+    const norm = e.normalize(rev, -0.5);
+    handles.push(norm);
+    lastHandle = norm;
+
+    const a = e.analyze(norm);
+    log(`   → ${a.durationSec.toFixed(2)} s · ${a.sampleRate} Hz · ${a.channels} ch · peak ${fmtDb(a.peakDb)} · rms ${fmtDb(a.rmsDb)}`);
+    drawWave(norm);
+    updateStats(norm);
+
+    // Keep interleaved PCM ready for playback.
+    lastPCM = e.toPCM(norm, 'f32');
+    $('btn-play').disabled = false;
+
+    // Try writing to disk only when the user picks a path.
+    $('btn-save').disabled = false;
+    log('<span class="ok">Pipeline OK.</span> Click “Export WAV…” to write a 16-bit file, or ▶ Play to audition.');
+    for (const h of handles) if (h !== norm) e.freeBuffer(h);
+  } catch (err) {
+    log('<span class="err">FAILED:</span> ' + err.message, 'err');
+    for (const h of handles) { try { e.freeBuffer(h); } catch (_) {} }
+    btn.disabled = false;
+    return;
+  }
+  btn.disabled = false;
+}
+
+function updateStats(handle) {
+  const e = window.proaudio.engine;
+  const a = e.analyze(handle);
+  const s = e.stats();
+  const rows = [
+    ['Engine', e.version()],
+    ['Live buffers', String(s.liveBuffers)],
+    ['Duration', a.durationSec.toFixed(3) + ' s'],
+    ['Sample rate', a.sampleRate + ' Hz'],
+    ['Channels', String(a.channels)],
+    ['Peak', fmtDb(a.peakDb)],
+    ['RMS', fmtDb(a.rmsDb)],
+  ];
+  $('stats').innerHTML = rows.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('');
+}
+
+async function exportLast() {
+  if (!lastHandle) { log('Nothing to export yet — run the self-test first.'); return; }
+  const e = window.proaudio.engine;
+  const path = await window.proaudio.dialog.saveAudio();
+  if (!path) { log('Export cancelled.'); return; }
+  try {
+    const bytes = e.writeWav(lastHandle, path, { bits: 16, float: false });
+    log(`<span class="ok">Wrote ${fmtBytes(bytes)}</span> → ${path}`);
+    const back = e.loadWav(path);
+    log(`Reloaded: ${back.bits}-bit ${back.format} · ${back.frames} frames · ${back.sampleRate} Hz`);
+    e.freeBuffer(back.handle);
+    window.proaudio.app.showInFolder(path);
+  } catch (err) {
+    log('<span class="err">Export failed:</span> ' + err.message, 'err');
+  }
+}
+
+function playLast() {
+  if (!lastPCM) return;
+  try {
+    audioCtx = audioCtx || new AudioContext();
+    // engine PCM is interleaved f32; split into planar channels for Web Audio
+    const src = new Float32Array(lastPCM);
+    const chans = window.proaudio.engine.info(lastHandle).channels;
+    const frames = Math.floor(src.length / chans);
+    const buf = audioCtx.createBuffer(chans, frames, 44100);
+    for (let c = 0; c < chans; c++) {
+      const out = buf.getChannelData(c);
+      for (let i = 0; i < frames; i++) out[i] = src[i * chans + c];
+    }
+    const node = audioCtx.createBufferSource();
+    node.buffer = buf;
+    node.connect(audioCtx.destination);
+    node.start();
+    log('▶ playing ' + frames + ' frames through Web Audio output');
+  } catch (err) {
+    log('<span class="err">Playback failed:</span> ' + err.message, 'err');
+  }
+}
+
+$('btn-test').addEventListener('click', runPipeline);
+$('btn-save').addEventListener('click', exportLast);
+$('btn-play').addEventListener('click', playLast);
+window.addEventListener('resize', () => { if (lastHandle !== null) drawWave(lastHandle); });
+</script>
+</body>
+</html>

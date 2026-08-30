@@ -269,6 +269,54 @@ test('gate attenuates quiet passages to the floor', () => {
   engine.freeBuffer(m); engine.freeBuffer(g);
 });
 
+test('limiter is a brickwall at the threshold', () => {
+  const h = toneHandle({ amplitude: 0.9, durationSec: 2, channels: 2 });
+  const lim = engine.limiter(h, { thresholdDb: -6, releaseMs: 80, lookaheadMs: 2 });
+  const a = engine.analyze(lim);
+  approx(a.peakDb, -6, 0.2, 'limited peak sits at threshold');
+  assert.ok(a.peakDb <= -5.8, 'peak never exceeds threshold');
+  assert.equal(engine.info(lim).frames, 88200, 'length preserved');
+  engine.freeBuffer(h); engine.freeBuffer(lim);
+});
+
+test('limiter leaves sub-threshold material untouched', () => {
+  const h = toneHandle({ amplitude: 0.1, durationSec: 1 }); // -20 dB
+  const lim = engine.limiter(h, { thresholdDb: -6, releaseMs: 80, lookaheadMs: 2 });
+  approx(engine.analyze(lim).peakDb, db(0.1), 0.05, 'no reduction below threshold');
+  engine.freeBuffer(h); engine.freeBuffer(lim);
+});
+
+test('clip enforces an absolute ceiling', () => {
+  const data = new Float32Array([0.9, 0.2, -0.8, 0.05]);
+  const h = engine.fromPCM(data.buffer, 'f32', 1, 44100);
+  const c = engine.clip(h, -6); // -6 dB = 0.5012
+  const v = pcmView(c);
+  approx(v[0], 0.5012, 0.001, 'clamped to ceiling');
+  approx(v[1], 0.2, 1e-6, 'below ceiling untouched');
+  approx(v[2], -0.5012, 0.001, 'negative clamp');
+  approx(v[3], 0.05, 1e-6, 'quiet untouched');
+  engine.freeBuffer(h); engine.freeBuffer(c);
+});
+
+test('linked compressor applies one gain across channels', () => {
+  // L carries a loud sine, R carries a quiet one.
+  const fs = 44100, n = fs;
+  const inter = new Float32Array(n * 2);
+  for (let i = 0; i < n; i++) {
+    inter[i * 2] = 0.9 * Math.sin((2 * Math.PI * 440 * i) / fs);
+    inter[i * 2 + 1] = 0.02 * Math.sin((2 * Math.PI * 440 * i) / fs);
+  }
+  const h = engine.fromPCM(inter.buffer, 'f32', 2, fs);
+  const opts = { thresholdDb: -20, ratio: 10, attackMs: 5, releaseMs: 100 };
+  const unlinked = engine.compressor(h, Object.assign({}, opts, { link: false }));
+  const linked = engine.compressor(h, Object.assign({}, opts, { link: true }));
+  const ru = engine.analyze(unlinked).perChannel[1].peakDb;
+  const rl = engine.analyze(linked).perChannel[1].peakDb;
+  assert.ok(rl < ru - 6,
+    `linked mode pulls the quiet channel down too (linked ${rl.toFixed(1)} dB vs unlinked ${ru.toFixed(1)} dB)`);
+  engine.freeBuffer(h); engine.freeBuffer(unlinked); engine.freeBuffer(linked);
+});
+
 // --- reverb / delay --------------------------------------------------------
 test('reverb renders stereo with decay tail', () => {
   const h = toneHandle({ durationSec: 0.5, amplitude: 0.5 });

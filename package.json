@@ -10,7 +10,7 @@
     "build:native": "node-gyp rebuild --directory=native",
     "build:native:debug": "node-gyp rebuild --directory=native --debug",
     "clean:native": "node-gyp clean --directory=native",
-    "test:engine": "node scripts/test-engine.js",
+    "test:engine": "node scripts/test-engine.js && node scripts/test-render-pipeline.js",
     "start": "electron .",
     "dist": "npm run build:native && electron-builder --win",
     "dist:portable": "npm run build:native && electron-builder --win portable",

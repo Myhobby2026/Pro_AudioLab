@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <deque>
 #include <random>
 #include <stdexcept>
 
@@ -325,26 +326,135 @@ std::unique_ptr<AudioBuffer> Compress(const AudioBuffer& in,
   const double w = c.kneeDb;
   const double slope = 1.0 / c.ratio - 1.0;  // negative
 
-  auto out = std::make_unique<AudioBuffer>(in.frames(), in.channels(), fs);
+  const size_t frames = in.frames();
+  const uint32_t ch = in.channels();
+  auto out = std::make_unique<AudioBuffer>(frames, ch, fs);
+
+  // Gain (linear) for a given envelope level.
+  const auto gainFor = [&](double env) {
+    const double envDb = env > 1e-9 ? LinToDb(env) : -999.0;
+    const double over = envDb - thr;
+    double gr = 0.0;  // gain reduction in dB (<= 0)
+    if (w > 0.0 && over > -w / 2.0 && over < w / 2.0) {
+      const double t = over + w / 2.0;
+      gr = slope * t * t / (2.0 * w);
+    } else if (over >= w / 2.0) {
+      gr = slope * over;
+    }
+    return DbToLin(gr + c.makeupDb);
+  };
+
+  if (c.link && ch >= 2) {
+    // One shared envelope from the loudest channel; identical gain on all
+    // channels keeps the stereo image stable.
+    std::vector<double> gains(frames, 1.0);
+    double env = 0.0;
+    for (size_t i = 0; i < frames; ++i) {
+      double mx = 0.0;
+      for (uint32_t k = 0; k < ch; ++k)
+        mx = std::max<double>(mx, std::fabs((double)in.channel(k)[i]));
+      const double coeff = mx > env ? att : rel;
+      env += coeff * (mx - env);
+      gains[i] = gainFor(env);
+    }
+    for (uint32_t k = 0; k < ch; ++k) {
+      const float* x = in.channel(k);
+      float* y = out->channel(k);
+      for (size_t i = 0; i < frames; ++i) y[i] = (float)(x[i] * gains[i]);
+    }
+  } else {
+    for (uint32_t k = 0; k < ch; ++k) {
+      const float* x = in.channel(k);
+      float* y = out->channel(k);
+      double env = 0.0;
+      for (size_t i = 0; i < frames; ++i) {
+        const double xl = std::fabs((double)x[i]);
+        const double coeff = xl > env ? att : rel;
+        env += coeff * (xl - env);
+        y[i] = (float)(x[i] * gainFor(env));
+      }
+    }
+  }
+  return out;
+}
+
+std::unique_ptr<AudioBuffer> Limit(const AudioBuffer& in,
+                                   const LimiterParams& p) {
+  const uint32_t fs = in.sampleRate();
+  if (fs == 0) throw std::invalid_argument("buffer has no sample rate");
+  LimiterParams l = p;
+  l.thresholdDb = ClampD(l.thresholdDb, -48.0, 0.0);
+  l.releaseMs = ClampD(l.releaseMs, 1.0, 2000.0);
+  l.lookaheadMs = ClampD(l.lookaheadMs, 0.0, 50.0);
+
+  const double thr = DbToLin(l.thresholdDb);
+  const double rel = std::exp(-1.0 / (l.releaseMs * 0.001 * fs));
+  const size_t L = (size_t)std::llround(l.lookaheadMs * fs / 1000.0);
+  const size_t frames = in.frames();
+  const uint32_t ch = in.channels();
+  auto out = std::make_unique<AudioBuffer>(frames, ch, fs);
+  if (frames == 0) return out;
+
+  // Sliding-window max of |x| over the last L+1 samples (monotonic deque).
+  // The signal is delayed by L samples, so the gain drop is applied before
+  // the peak arrives: a true look-ahead brickwall.
+  std::deque<std::pair<size_t, double>> dq;
+  double gain = 1.0;
+
+  if (L == 0) {
+    for (size_t i = 0; i < frames; ++i) {
+      double mx = 0.0;
+      for (uint32_t k = 0; k < ch; ++k)
+        mx = std::max<double>(mx, std::fabs((double)in.channel(k)[i]));
+      while (!dq.empty() && dq.back().second <= mx) dq.pop_back();
+      dq.emplace_back(i, mx);
+      while (!dq.empty() && dq.front().first < i) dq.pop_front();
+      const double winMax = dq.front().second;
+      const double target = (winMax > thr) ? thr / winMax : 1.0;
+      if (target < gain) gain = target;
+      else gain += rel * (target - gain);
+      for (uint32_t k = 0; k < ch; ++k)
+        out->channel(k)[i] = (float)(in.channel(k)[i] * gain);
+    }
+    return out;
+  }
+
+  // Delay line per channel, prefilled with the first sample (no initial dip).
+  std::vector<std::vector<float>> tape(ch, std::vector<float>(L, 0.0f));
+  for (uint32_t k = 0; k < ch; ++k)
+    std::fill(tape[k].begin(), tape[k].end(), in.channel(k)[0]);
+  for (size_t i = 0; i < frames; ++i) {
+    for (uint32_t k = 0; k < ch; ++k) {
+      const double a = std::fabs((double)in.channel(k)[i]);
+      while (!dq.empty() && dq.back().second <= a) dq.pop_back();
+      dq.emplace_back(i, a);
+    }
+    while (!dq.empty() && dq.front().first + L < i) dq.pop_front();
+    const double winMax = dq.front().second;
+    const double target = (winMax > thr) ? thr / winMax : 1.0;
+    if (target < gain) gain = target;
+    else gain += rel * (target - gain);
+    for (uint32_t k = 0; k < ch; ++k) {
+      float* t = tape[k].data();
+      const size_t w = i % L;
+      const float delayed = t[w];
+      t[w] = in.channel(k)[i];
+      out->channel(k)[i] = (float)((double)delayed * gain);
+    }
+  }
+  return out;
+}
+
+std::unique_ptr<AudioBuffer> Clip(const AudioBuffer& in, double ceilingDb) {
+  const double ceiling = DbToLin(ClampD(ceilingDb, -60.0, 0.0));
+  auto out = std::make_unique<AudioBuffer>(in.frames(), in.channels(),
+                                           in.sampleRate());
   for (uint32_t ch = 0; ch < in.channels(); ++ch) {
     const float* x = in.channel(ch);
     float* y = out->channel(ch);
-    double env = 0.0;
     for (size_t i = 0; i < in.frames(); ++i) {
-      const double xl = std::fabs(x[i]);
-      const double coeff = xl > env ? att : rel;
-      env += coeff * (xl - env);
-      const double envDb = env > 1e-9 ? LinToDb(env) : -999.0;
-      const double over = envDb - thr;
-      double gr = 0.0;  // gain reduction in dB (<= 0)
-      if (w > 0.0 && over > -w / 2.0 && over < w / 2.0) {
-        const double t = over + w / 2.0;
-        gr = slope * t * t / (2.0 * w);
-      } else if (over >= w / 2.0) {
-        gr = slope * over;
-      }
-      const double gainDb = gr + c.makeupDb;
-      y[i] = (float)(x[i] * DbToLin(gainDb));
+      const double v = (double)x[i];
+      y[i] = (float)(v > ceiling ? ceiling : (v < -ceiling ? -ceiling : v));
     }
   }
   return out;

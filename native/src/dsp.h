@@ -47,9 +47,24 @@ struct CompressorParams {
   double releaseMs = 100.0;
   double kneeDb = 6.0;
   double makeupDb = 0.0;
+  bool link = false;  // true: one linked envelope from the max of all channels
 };
 std::unique_ptr<AudioBuffer> Compress(const AudioBuffer& in,
                                       const CompressorParams& p);
+
+// Look-ahead brickwall peak limiter. The signal is delayed by `lookaheadMs`
+// and gain drops anticipate peaks, so |output| never exceeds `thresholdDb`.
+// Channels share one linked gain (stereo image preserved).
+struct LimiterParams {
+  double thresholdDb = -1.0;
+  double releaseMs = 100.0;
+  double lookaheadMs = 1.0;
+};
+std::unique_ptr<AudioBuffer> Limit(const AudioBuffer& in,
+                                   const LimiterParams& p);
+
+// Hard clip at an absolute output ceiling.
+std::unique_ptr<AudioBuffer> Clip(const AudioBuffer& in, double ceilingDb);
 
 struct GateParams {
   double thresholdDb = -45.0;

@@ -4,7 +4,7 @@
 // no direct Node access, contextIsolation stays enabled.
 'use strict';
 
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer, webUtils } = require('electron');
 
 // The native C++ audio engine (N-API addon, ABI-stable across Node/Electron).
 let engine;
@@ -48,6 +48,8 @@ const engineApi = {
   reverse: engine.reverse.bind(engine),
   biquad: engine.biquad.bind(engine),
   compressor: engine.compressor.bind(engine),
+  limiter: engine.limiter.bind(engine),
+  clip: engine.clip.bind(engine),
   gate: engine.gate.bind(engine),
   reverb: engine.reverb.bind(engine),
   delay: engine.delay.bind(engine),
@@ -65,8 +67,13 @@ contextBridge.exposeInMainWorld('proaudio', {
   dialog: {
     /** Ask the user for an audio file to open. Returns a path or null. */
     openAudio: () => ipcRenderer.invoke('dialog:open-audio'),
-    /** Ask the user where to save. Returns a path or null. */
-    saveAudio: () => ipcRenderer.invoke('dialog:save-audio'),
+    /** Ask the user where to save (optionally pre-filling `suggestedName`). */
+    saveAudio: (suggestedName) => ipcRenderer.invoke('dialog:save-audio', suggestedName),
+  },
+
+  fs: {
+    /** Real filesystem path of a File chosen via <input type=file> or drag&drop. */
+    getPathForFile: (file) => webUtils.getPathForFile(file),
   },
 
   app: {

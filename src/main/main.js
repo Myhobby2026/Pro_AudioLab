@@ -93,6 +93,11 @@ function buildMenu() {
         { role: 'zoomIn' },
         { role: 'zoomOut' },
         { role: 'togglefullscreen' },
+        { type: 'separator' },
+        {
+          label: 'C++ Engine Self-Test…',
+          click: () => openSelftestWindow(),
+        },
       ],
     },
     {
@@ -126,14 +131,39 @@ ipcMain.handle('dialog:open-audio', async () => {
   return r.canceled || r.filePaths.length === 0 ? null : r.filePaths[0];
 });
 
-ipcMain.handle('dialog:save-audio', async () => {
+ipcMain.handle('dialog:save-audio', async (_e, suggestedName) => {
   const r = await dialog.showSaveDialog(mainWindow, {
     title: 'Export Audio',
-    defaultPath: 'proaudiolab-export.wav',
+    defaultPath:
+      typeof suggestedName === 'string' && suggestedName
+        ? suggestedName
+        : 'proaudiolab-export.wav',
     filters: EXPORT_FILTERS,
   });
   return r.canceled ? null : r.filePath;
 });
+
+// Child window with the native-engine diagnostic page.
+function openSelftestWindow() {
+  const win = new BrowserWindow({
+    width: 1100,
+    height: 860,
+    title: 'Pro AudioLab — Engine Self-Test',
+    backgroundColor: '#0b0e14',
+    parent: mainWindow || undefined,
+    webPreferences: {
+      preload: path.join(__dirname, '..', 'preload', 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: false,
+      spellcheck: false,
+    },
+  });
+  win.setMenu(null);
+  win.loadFile(path.join(__dirname, '..', 'renderer', 'selftest.html'));
+}
+
+ipcMain.handle('window:open-selftest', () => openSelftestWindow());
 
 ipcMain.handle('app:info', () => ({
   name: APP_NAME,

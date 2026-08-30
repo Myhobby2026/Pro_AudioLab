@@ -1,29 +1,42 @@
 # Pro AudioLab — Electron + C++ Windows Application
 
-A professional audio workstation desktop app for **Windows**: an **Electron** UI on top of a
-**native C++ DSP engine** compiled as an N-API addon. All heavy audio work — WAV parsing,
-mixing, effects, analysis, export — runs in compiled C++, not JavaScript.
+**"Pro Audio Player – Studio Edition"** rebuilt as a Windows desktop app: your original
+single-file HTML interface, running in **Electron**, with all audio processing moved into a
+**native C++ DSP engine** compiled as an N-API addon.
 
 ```
-┌────────────────────────────────────────────┐
-│  Renderer (UI)                             │
-│  Pro-Audio.html interface                  │
-│  window.proaudio.engine.*  ← contextBridge │
-├────────────────────────────────────────────┤      ┌──────────────────────────┐
-│  Preload (isolated, whitelisted API)       │──────▶  native/audio_engine    │
-├────────────────────────────────────────────┤      │  C++17 · N-API addon    │
-│  Main process                              │      │  WAV I/O · DSP · Mix    │
-│  window · menus · file dialogs             │      │  analysis · generators  │
-└────────────────────────────────────────────┘      └──────────────────────────┘
+┌──────────────────────────────────────────────┐
+│  Renderer — your Pro-Audio.html UI           │
+│  Home · Playlist · Effects · Master ·        │
+│  Equalizer · Render & Export · Settings      │
+│         window.proaudio.*  ← contextBridge   │
+├──────────────────────────────────────────────┤       ┌─────────────────────────────┐
+│  Preload (isolated, whitelisted API)         │──────▶│  native/audio_engine        │
+├──────────────────────────────────────────────┤       │  C++17 · N-API addon       │
+│  Main process                                │       │  WAV I/O · 10-band EQ      │
+│  window · menus · file dialogs · self-test   │       │  comp · limiter · reverb   │
+└──────────────────────────────────────────────┘       │  resample · mix · analyze  │
+                                                       └─────────────────────────────┘
 ```
 
-- **UI / app shell** — Electron (`src/main`, `src/preload`, `src/renderer`)
-- **Audio engine** — C++ (`native/src`), compiled with node-gyp into `audio_engine.node`
-- **Renderer ↔ engine** — secure `contextBridge` API (contextIsolation ON, nodeIntegration OFF)
-- **Packaging** — electron-builder → NSIS installer + portable `.exe` for Windows
+**What runs in C++ now** (previously JavaScript):
 
-The C++ addon is a pure **N-API** module, so one build works in both plain Node (for the
-test suite) and Electron (ABI-stable across versions — no rebuild needed for Electron).
+| Original (Web Audio / JS) | Pro AudioLab (native C++) |
+|---|---|
+| `OfflineAudioContext` render | Full mastering chain in C++: resample → 10-band EQ → bass/treble shelves → reverb → compressor → master gain → limiter → ceiling |
+| `DynamicsCompressor` ratio 20 "limiter" | True look-ahead **brickwall limiter** + hard **output ceiling** |
+| Hand-rolled JS WAV writer (blob download) | C++ WAV writer at 16/24-bit or 32-bit float, via the **native save dialog** |
+| `FileReader` + `decodeAudioData` for WAVs | C++ RIFF/RF64 WAV parser (instant, no decode step) |
+| JS min/max loops for the waveform | `getPeaks()` in C++ |
+| `Math.random` noise-buffer reverb | Freeverb-style Schroeder reverb (8 combs + 4 allpasses per side) |
+
+Realtime playback/monitoring still uses Chromium's Web Audio graph (that *is* a C++
+engine) — the upgrade targets every place your app previously burned JavaScript:
+decoding, offline rendering, analysis and export.
+
+Extras that come with the desktop shell: native menus & file dialogs (Ctrl+O / Ctrl+S),
+drag & drop files onto the window, bundled Font Awesome (works fully offline), CSP
+security headers, and a **C++ Engine Self-Test** window (View menu).
 
 ---
 
@@ -48,7 +61,7 @@ git clone https://github.com/Myhobby2026/Pro_AudioLab.git
 cd Pro_AudioLab
 npm install          # fetches Electron + build toolchain
 npm run build:native # compiles the C++ engine (audio_engine.node)
-npm run test:engine  # 35-test C++ engine suite (runs under plain Node)
+npm run test:engine  # 46 tests: C++ engine + UI render-pipeline integration
 npm start            # launch the Electron app
 ```
 
@@ -72,17 +85,20 @@ show an "unknown publisher" warning on first launch (click *More info → Run an
 
 | Path | What it is |
 |---|---|
-| `src/main/main.js` | Electron main process: window, native menu, file dialogs, IPC |
+| `src/main/main.js` | Electron main process: window, native menu, file dialogs, IPC, self-test window |
 | `src/preload/preload.js` | `contextBridge` whitelist — the only API the UI can touch |
-| `src/renderer/` | UI. `index.html` is the current self-test console; the original `Pro-Audio.html` interface is mounted here during integration |
+| `src/renderer/index.html` | **Your Pro-Audio.html UI, integrated with the C++ engine** (render/export/waveform/analysis all native) |
+| `src/renderer/selftest.html` | Engine self-test & diagnostic page (View → C++ Engine Self-Test) |
+| `src/renderer/vendor/` | Bundled Font Awesome 6.4 (offline, no CDN) |
 | `native/src/buffer.*` | Planar float audio buffer, PCM conversion, handle registry |
 | `native/src/wav.*` | RIFF/RF64 WAV reader/writer (8/16/24/32-bit int, 32/64-bit float, WAVE_FORMAT_EXTENSIBLE, Unicode paths) |
-| `native/src/dsp.*` | Biquad EQ (RBJ), compressor (soft-knee), noise gate, Freeverb-style reverb, feedback delay, gain/fades/normalize/pan/reverse, resampling, channel conversion, silence tools |
+| `native/src/dsp.*` | Biquad EQ (RBJ), soft-knee compressor (incl. stereo-linked mode), look-ahead brickwall limiter, output ceiling clip, Freeverb-style reverb, feedback delay, gain/fades/normalize/pan/reverse, resampling, channel conversion, silence tools |
 | `native/src/analysis.*` | Peak/RMS/DC metering, waveform peaks for rendering |
 | `native/src/mixer.*` | Multitrack mixdown (auto resample + channel conversion + pan) |
 | `native/src/generator.*` | Sine/square/saw/triangle/noise/silence/impulse generators |
 | `native/src/napi_bindings.cpp` | N-API glue: all engine functions exposed to JS |
-| `scripts/test-engine.js` | 35-test headless engine suite |
+| `scripts/test-engine.js` | 39-test headless engine suite |
+| `scripts/test-render-pipeline.js` | 7-test integration suite: the exact UI→C++ render chain |
 | `electron-builder.yml` | Windows packaging config |
 
 Full engine API reference: **[docs/ENGINE_API.md](docs/ENGINE_API.md)**

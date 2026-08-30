@@ -430,7 +430,31 @@ Napi::Value Compressor(const Napi::CallbackInfo& info) {
     p.releaseMs = OptNum(info, 1, "releaseMs", p.releaseMs);
     p.kneeDb = OptNum(info, 1, "kneeDb", p.kneeDb);
     p.makeupDb = OptNum(info, 1, "makeupDb", p.makeupDb);
+    p.link = OptBoolOrNum(info, 1, "link", 0) != 0;
     return NewHandle(env, pal::Compress(*b, p));
+  } catch (const std::exception& e) { return ThrowCpp(env, e); }
+}
+
+Napi::Value Limiter(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+  try {
+    const pal::AudioBuffer* b = BufArg(info, 0);
+    if (!b) throw std::invalid_argument("invalid buffer handle");
+    pal::LimiterParams p;
+    p.thresholdDb = OptNum(info, 1, "thresholdDb", p.thresholdDb);
+    p.releaseMs = OptNum(info, 1, "releaseMs", p.releaseMs);
+    p.lookaheadMs = OptNum(info, 1, "lookaheadMs", p.lookaheadMs);
+    return NewHandle(env, pal::Limit(*b, p));
+  } catch (const std::exception& e) { return ThrowCpp(env, e); }
+}
+
+Napi::Value Clip(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+  try {
+    const pal::AudioBuffer* b = BufArg(info, 0);
+    if (!b) throw std::invalid_argument("invalid buffer handle");
+    const double ceiling = NumArg(info, 1, -0.1);
+    return NewHandle(env, pal::Clip(*b, ceiling));
   } catch (const std::exception& e) { return ThrowCpp(env, e); }
 }
 
@@ -586,6 +610,8 @@ Napi::Object InitEngine(Napi::Env env, Napi::Object exports) {
   exports.Set("reverse", Napi::Function::New(env, Reverse));
   exports.Set("biquad", Napi::Function::New(env, Biquad));
   exports.Set("compressor", Napi::Function::New(env, Compressor));
+  exports.Set("limiter", Napi::Function::New(env, Limiter));
+  exports.Set("clip", Napi::Function::New(env, Clip));
   exports.Set("gate", Napi::Function::New(env, Gate));
   exports.Set("reverb", Napi::Function::New(env, Reverb));
   exports.Set("delay", Napi::Function::New(env, DelayFx));

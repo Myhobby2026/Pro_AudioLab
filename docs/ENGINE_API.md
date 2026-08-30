@@ -72,10 +72,21 @@ RBJ audio-EQ-cookbook biquad, transposed direct form II. `type`:
 `lowpass · highpass · bandpass · notch · allpass · peaking · lowshelf · highshelf`
 (`gainDb` applies to peaking/shelf types).
 
-### `compressor(handle, {thresholdDb=-20, ratio=4, attackMs=10, releaseMs=100, kneeDb=6, makeupDb=0})`
+### `compressor(handle, {thresholdDb=-20, ratio=4, attackMs=10, releaseMs=100, kneeDb=6, makeupDb=0, link=false})`
 
-RMS-style envelope follower with soft knee and smooth attack/release. Per-channel
-(dual mono for stereo).
+RMS-style envelope follower with soft knee and smooth attack/release.
+`link: true` derives one shared envelope from the loudest channel and applies
+identical gain to all channels (mastering-friendly, keeps the stereo image stable).
+
+### `limiter(handle, {thresholdDb=-1, releaseMs=100, lookaheadMs=1})`
+
+True look-ahead **brickwall peak limiter**. The signal is delayed by `lookaheadMs`
+and gain drops anticipate peaks, so the output **never** exceeds `thresholdDb`.
+Channels share one linked gain.
+
+### `clip(handle, ceilingDb=-0.1)`
+
+Hard clip at an absolute output ceiling — the final safety stage of a mastering chain.
 
 ### `gate(handle, {thresholdDb=-45, attackMs=1, releaseMs=60, floorDb=-96})`
 
@@ -119,11 +130,22 @@ generateTone({
 
 ---
 
-## Integration notes for the Pro-Audio.html UI
+## Integration notes (how Pro-Audio.html is wired)
 
-The legacy single-file HTML interface is mounted as the renderer. Wherever it
-used browser APIs (`FileReader`, `AudioContext.decodeAudioData`, `<a download>`),
-wire it to the engine instead:
+The original single-file UI is mounted as the renderer at `src/renderer/index.html`,
+already wired to the engine:
+
+- **WAV files** → `proaudio.fs.getPathForFile(file)` (real path) → `engine.loadWav(path)`
+  — decoded entirely by the C++ parser; non-WAV formats still use Chromium's decoder and
+  are handed to the engine via `engine.fromPCM`.
+- **Render & Export page** → the full chain (`AudioRenderer.render` in the page) runs
+  resample → 10× biquad EQ → bass/treble shelves → reverb → linked compressor → master
+  gain → look-ahead limiter → stereo → ceiling clip, entirely in C++.
+- **Export** → native save dialog (`proaudio.dialog.saveAudio(name)`) → `engine.writeWav`.
+- **Waveform preview** → `engine.getPeaks()`.
+- Playback/monitoring keeps the Web Audio graph (Chromium's native audio thread).
+
+If you extend the UI, follow the same pattern:
 
 | Web pattern | Pro AudioLab pattern |
 |---|---|
